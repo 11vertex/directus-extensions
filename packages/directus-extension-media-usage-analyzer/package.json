@@ -1,5 +1,5 @@
 {
-  "name": "directus-extension-media-usage-analyzer",
+  "name": "@11vertex/directus-extension-media-usage-analyzer",
   "version": "1.0.0",
   "description": "Find unused, duplicate, oversized and broken file references across a Directus project",
   "icon": "perm_media",
@@ -72,5 +72,8 @@
   "devDependencies": {
     "@directus/extensions-sdk": "14.0.0",
     "vue": "^3.5.17"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

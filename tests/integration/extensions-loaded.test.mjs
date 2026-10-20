@@ -5,16 +5,16 @@ import { clients } from "./support/client.mjs";
 const { state, admin, editor, anonymous } = clients();
 
 const EXTENSIONS = [
-  "directus-extension-activity-cleanup-manager",
-  "directus-extension-content-dependency-graph",
-  "directus-extension-discord-operation",
-  "directus-extension-flow-debugger",
-  "directus-extension-flow-version-history",
-  "directus-extension-media-usage-analyzer",
-  "directus-extension-permission-auditor",
-  "directus-extension-permission-simulator",
-  "directus-extension-slack-operation",
-  "directus-extension-teams-operation"
+  "@11vertex/directus-extension-activity-cleanup-manager",
+  "@11vertex/directus-extension-content-dependency-graph",
+  "@11vertex/directus-extension-discord-operation",
+  "@11vertex/directus-extension-flow-debugger",
+  "@11vertex/directus-extension-flow-version-history",
+  "@11vertex/directus-extension-media-usage-analyzer",
+  "@11vertex/directus-extension-permission-auditor",
+  "@11vertex/directus-extension-permission-simulator",
+  "@11vertex/directus-extension-slack-operation",
+  "@11vertex/directus-extension-teams-operation"
 ];
 
 const ADMIN_ENDPOINTS = [

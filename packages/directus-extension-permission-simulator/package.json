@@ -1,5 +1,5 @@
 {
-  "name": "directus-extension-permission-simulator",
+  "name": "@11vertex/directus-extension-permission-simulator",
   "version": "1.0.0",
   "description": "Simulate Directus permissions for any role or user without logging in as them",
   "icon": "security",
@@ -74,5 +74,8 @@
     "@directus/api": "40.0.0",
     "@directus/extensions-sdk": "14.0.0",
     "vue": "^3.5.17"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

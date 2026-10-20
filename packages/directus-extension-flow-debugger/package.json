@@ -1,5 +1,5 @@
 {
-  "name": "directus-extension-flow-debugger",
+  "name": "@11vertex/directus-extension-flow-debugger",
   "version": "1.0.0",
   "description": "Debug and monitor Directus Flow executions with step-level visibility from native activity history",
   "icon": "bug_report",
@@ -72,5 +72,8 @@
   "devDependencies": {
     "@directus/extensions-sdk": "14.0.0",
     "vue": "^3.5.17"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

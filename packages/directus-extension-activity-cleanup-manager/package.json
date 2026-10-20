@@ -1,5 +1,5 @@
 {
-  "name": "directus-extension-activity-cleanup-manager",
+  "name": "@11vertex/directus-extension-activity-cleanup-manager",
   "version": "1.0.0",
   "description": "Inspect directus_activity and directus_revisions storage, review retention settings and purge per collection",
   "icon": "cleaning_services",
@@ -71,5 +71,8 @@
   "devDependencies": {
     "@directus/extensions-sdk": "14.0.0",
     "vue": "^3.5.17"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

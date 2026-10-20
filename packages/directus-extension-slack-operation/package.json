@@ -1,5 +1,5 @@
 {
-  "name": "directus-extension-slack-operation",
+  "name": "@11vertex/directus-extension-slack-operation",
   "version": "1.0.0",
   "description": "Send Slack messages from Directus Flows via incoming webhooks or a bot token",
   "icon": "tag",
@@ -58,5 +58,8 @@
   },
   "devDependencies": {
     "@directus/extensions-sdk": "14.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
