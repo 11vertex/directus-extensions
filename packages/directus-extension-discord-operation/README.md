@@ -1,4 +1,4 @@
-# Discord Operation
+# Discord Operation for Directus
 
 Send messages and rich embeds to Discord channels or threads from your Directus Flows, using a webhook or a Discord bot.
 

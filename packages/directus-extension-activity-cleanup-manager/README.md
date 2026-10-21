@@ -1,4 +1,4 @@
-# Activity & Revisions Cleanup Manager
+# Activity & Revisions Cleanup Manager for Directus
 
 See how much history (activity and revisions) each collection keeps, check whether Directus' automatic cleanup is turned on, and clean up the history of a single collection.
 

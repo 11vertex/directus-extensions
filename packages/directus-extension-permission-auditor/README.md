@@ -1,4 +1,4 @@
-# Permission Auditor
+# Permission Auditor for Directus
 
 Scan every policy and permission in your Directus project for risky access, with a plain explanation and a fix for each finding.
 

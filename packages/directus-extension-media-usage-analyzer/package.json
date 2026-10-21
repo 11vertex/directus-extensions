@@ -1,7 +1,7 @@
 {
   "name": "@11vertex/directus-extension-media-usage-analyzer",
-  "version": "1.0.0",
-  "description": "Find unused, duplicate, oversized and broken file references across a Directus project",
+  "version": "1.0.1",
+  "description": "Directus media usage analyzer: find unused and duplicate files, broken file links and large images, see storage use, and safely delete what nobody uses",
   "icon": "perm_media",
   "license": "MIT",
   "author": {
@@ -27,17 +27,22 @@
     "directus",
     "directus-extension",
     "directus-extension-bundle",
-    "media",
+    "directus-extension-module",
     "files",
-    "assets",
+    "media-library",
+    "unused-files",
+    "duplicate-files",
     "storage",
-    "cleanup"
+    "cleanup",
+    "assets",
+    "admin-tool"
   ],
   "type": "module",
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "directus:extension": {
     "type": "bundle",

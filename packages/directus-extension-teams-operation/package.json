@@ -1,7 +1,7 @@
 {
   "name": "@11vertex/directus-extension-teams-operation",
-  "version": "1.0.0",
-  "description": "Send Microsoft Teams messages and Adaptive Cards from Directus Flows",
+  "version": "1.0.1",
+  "description": "Directus flow operation to send Microsoft Teams messages and Adaptive Cards through a Workflows webhook, for notifications and alerts",
   "icon": "groups",
   "license": "MIT",
   "author": {
@@ -27,16 +27,22 @@
     "directus",
     "directus-extension",
     "directus-custom-operation",
+    "directus-operation",
     "microsoft-teams",
     "teams",
     "adaptive-cards",
-    "webhook"
+    "power-automate",
+    "notifications",
+    "alerts",
+    "flows",
+    "automation"
   ],
   "type": "module",
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "directus:extension": {
     "type": "operation",

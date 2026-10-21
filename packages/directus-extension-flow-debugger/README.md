@@ -1,4 +1,4 @@
-# Flow Debugger
+# Flow Debugger for Directus
 
 See every run of your Directus Flows, find out which step failed and why, and compare a failed run with the last one that worked.
 

@@ -1,7 +1,7 @@
 {
   "name": "@11vertex/directus-extension-flow-debugger",
-  "version": "1.0.0",
-  "description": "Debug and monitor Directus Flow executions with step-level visibility from native activity history",
+  "version": "1.0.1",
+  "description": "Directus flow debugger: browse flow runs, see which step failed and why, inspect step inputs and outputs, and compare with the last successful run",
   "icon": "bug_report",
   "license": "MIT",
   "author": {
@@ -29,15 +29,20 @@
     "directus-extension-bundle",
     "directus-extension-module",
     "flows",
-    "debugger",
-    "activity",
-    "operations"
+    "flow-debugger",
+    "debugging",
+    "logs",
+    "workflow",
+    "automation",
+    "troubleshooting",
+    "admin-tool"
   ],
   "type": "module",
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "directus:extension": {
     "type": "bundle",

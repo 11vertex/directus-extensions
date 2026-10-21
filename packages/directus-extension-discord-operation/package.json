@@ -1,7 +1,7 @@
 {
   "name": "@11vertex/directus-extension-discord-operation",
-  "version": "1.0.0",
-  "description": "Send text or rich embed messages to Discord via webhooks or a Discord bot",
+  "version": "1.0.1",
+  "description": "Directus flow operation to send Discord messages and rich embeds through a webhook or bot, for notifications and alerts",
   "icon": "chat_bubble",
   "license": "MIT",
   "author": {
@@ -29,14 +29,20 @@
     "directus-custom-operation",
     "directus-operation",
     "discord",
-    "webhook",
-    "embed"
+    "discord-webhook",
+    "discord-bot",
+    "embed",
+    "notifications",
+    "alerts",
+    "flows",
+    "automation"
   ],
   "type": "module",
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "directus:extension": {
     "type": "operation",

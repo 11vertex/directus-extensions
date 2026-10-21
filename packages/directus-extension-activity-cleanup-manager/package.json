@@ -1,7 +1,7 @@
 {
   "name": "@11vertex/directus-extension-activity-cleanup-manager",
-  "version": "1.0.0",
-  "description": "Inspect directus_activity and directus_revisions storage, review retention settings and purge per collection",
+  "version": "1.0.1",
+  "description": "Directus activity and revisions cleanup: see how much history each collection keeps, check retention settings and safely clean up old activity and revisions",
   "icon": "cleaning_services",
   "license": "MIT",
   "author": {
@@ -27,16 +27,22 @@
     "directus",
     "directus-extension",
     "directus-extension-bundle",
+    "directus-extension-module",
     "activity",
     "revisions",
     "retention",
-    "cleanup"
+    "cleanup",
+    "database",
+    "storage",
+    "maintenance",
+    "admin-tool"
   ],
   "type": "module",
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "directus:extension": {
     "type": "bundle",

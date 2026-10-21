@@ -1,7 +1,7 @@
 {
   "name": "@11vertex/directus-extension-flow-version-history",
-  "version": "1.0.0",
-  "description": "Browse and compare native Directus Flow and operation definition revisions",
+  "version": "1.0.1",
+  "description": "Directus flow version history: see who changed a flow or step, when, with before and after values and the flow as it looked at that time",
   "icon": "history",
   "license": "MIT",
   "author": {
@@ -27,16 +27,22 @@
     "directus",
     "directus-extension",
     "directus-extension-bundle",
+    "directus-extension-module",
     "flows",
-    "history",
+    "version-history",
     "revisions",
-    "audit"
+    "changelog",
+    "audit-log",
+    "workflow",
+    "automation",
+    "admin-tool"
   ],
   "type": "module",
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "directus:extension": {
     "type": "bundle",

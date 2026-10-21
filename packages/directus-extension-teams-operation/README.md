@@ -1,4 +1,4 @@
-# Microsoft Teams Operation
+# Microsoft Teams Operation for Directus
 
 Send messages to Microsoft Teams channels and chats from your Directus Flows as Adaptive Cards, using a Teams Workflows webhook.
 

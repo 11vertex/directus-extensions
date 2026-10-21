@@ -1,7 +1,7 @@
 {
   "name": "@11vertex/directus-extension-slack-operation",
-  "version": "1.0.0",
-  "description": "Send Slack messages from Directus Flows via incoming webhooks or a bot token",
+  "version": "1.0.1",
+  "description": "Directus flow operation to send Slack messages and Block Kit layouts through a webhook or bot, for notifications and alerts",
   "icon": "tag",
   "license": "MIT",
   "author": {
@@ -27,15 +27,22 @@
     "directus",
     "directus-extension",
     "directus-custom-operation",
+    "directus-operation",
     "slack",
-    "webhook",
-    "block-kit"
+    "slack-webhook",
+    "slack-bot",
+    "block-kit",
+    "notifications",
+    "alerts",
+    "flows",
+    "automation"
   ],
   "type": "module",
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "directus:extension": {
     "type": "operation",
