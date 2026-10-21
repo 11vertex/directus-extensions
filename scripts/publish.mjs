@@ -3,6 +3,7 @@
 //   node scripts/publish.mjs            # from your machine (after `npm login`; npm asks for your 2FA code)
 //   node scripts/publish.mjs --ci       # from GitHub Actions with npm trusted publishing (adds provenance)
 //   node scripts/publish.mjs --dry-run  # show what would be published
+//   node scripts/publish.mjs --otp=123456  # pass your 2FA code (codes last ~30 seconds)
 //
 // In --ci mode it also creates a `<name>@<version>` git tag for every published version that has
 // none yet, so versions first published from a machine get their tag on the public repo too.
@@ -12,6 +13,7 @@ import { join } from "node:path";
 
 const ci = process.argv.includes("--ci");
 const dryRun = process.argv.includes("--dry-run");
+const otp = process.argv.find((arg) => arg.startsWith("--otp="))?.slice("--otp=".length);
 
 function isPublished(name, version) {
   const result = spawnSync("npm", ["view", `${name}@${version}`, "version"], { encoding: "utf8" });
@@ -34,7 +36,7 @@ for (const pkg of pending) {
     continue;
   }
   console.log(`publishing ${id}`);
-  const args = ["publish", "--access", "public", ...(ci ? ["--provenance"] : [])];
+  const args = ["publish", "--access", "public", ...(ci ? ["--provenance"] : []), ...(otp ? [`--otp=${otp}`] : [])];
   execFileSync("npm", args, { cwd: pkg.dir, stdio: "inherit" });
 }
 
