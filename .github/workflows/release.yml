@@ -34,5 +34,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm test
-      - run: node scripts/publish.mjs --ci
+      - run: pnpm release
+        env:
+          NPM_CONFIG_PROVENANCE: "true"
       - run: git push --tags

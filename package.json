@@ -20,7 +20,7 @@
     "test:integration": "node --test --test-concurrency=1 --test-global-setup=tests/integration/global-setup.mjs \"tests/integration/*.test.mjs\"",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "node scripts/publish.mjs"
+    "release": "changeset publish"
   },
   "devDependencies": {
     "directus": "^12.5.0",
