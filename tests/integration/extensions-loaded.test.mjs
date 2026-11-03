@@ -44,12 +44,19 @@ describe("all extensions", () => {
   });
 
   it("ship their app code to the Data Studio", async () => {
-    const response = await fetch(`${state.baseUrl}/extensions/sources/index.js`, {
-      headers: { authorization: `Bearer ${state.adminToken}` }
-    });
-    assert.equal(response.status, 200);
-    const source = await response.text();
-    for (const id of [
+    // Directus serves a small loader that imports the extensions as separate chunks; read them all.
+    const fetchSource = async (name) => {
+      const response = await fetch(`${state.baseUrl}/extensions/sources/${name}`, {
+        headers: { authorization: `Bearer ${state.adminToken}` }
+      });
+      assert.equal(response.status, 200, `${name} should be served`);
+      return response.text();
+    };
+    const loader = await fetchSource("index.js");
+    const chunks = [...loader.matchAll(/import\(['"]\.\/([^'"]+)['"]\)/g)].map((match) => match[1]);
+    const source = [loader, ...(await Promise.all(chunks.map(fetchSource)))].join("\n");
+
+    for (const name of [
       "permission-simulator",
       "permission-auditor",
       "flow-debugger",
@@ -58,10 +65,10 @@ describe("all extensions", () => {
       "content-dependency-graph",
       "activity-cleanup-manager"
     ]) {
-      assert.ok(source.includes(id), `module "${id}" missing from the app bundle`);
+      assert.ok(source.includes(name), `module "${name}" missing from the app bundle`);
     }
     for (const operation of ["discord", "slack", "teams"]) {
-      assert.ok(source.includes(`"${operation}"`), `operation "${operation}" missing from the app bundle`);
+      assert.match(source, new RegExp(`id:\\s*["'\`]${operation}["'\`]`), `operation "${operation}" missing from the app bundle`);
     }
   });
 
