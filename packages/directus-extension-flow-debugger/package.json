@@ -1,0 +1,76 @@
+{
+  "name": "directus-extension-flow-debugger",
+  "version": "1.0.0",
+  "description": "Debug and monitor Directus Flow executions with step-level visibility from native activity history",
+  "icon": "bug_report",
+  "license": "MIT",
+  "author": {
+    "name": "11Vertex",
+    "url": "https://github.com/11Vertex"
+  },
+  "contributors": [
+    {
+      "name": "Kashyap Thaker",
+      "url": "https://github.com/kashyap-thakar"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/11Vertex/directus-extensions.git",
+    "directory": "packages/directus-extension-flow-debugger"
+  },
+  "homepage": "https://github.com/11Vertex/directus-extensions/tree/main/packages/directus-extension-flow-debugger#readme",
+  "bugs": {
+    "url": "https://github.com/11Vertex/directus-extensions/issues"
+  },
+  "keywords": [
+    "directus",
+    "directus-extension",
+    "directus-extension-bundle",
+    "directus-extension-module",
+    "flows",
+    "debugger",
+    "activity",
+    "operations"
+  ],
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "directus:extension": {
+    "type": "bundle",
+    "path": {
+      "app": "dist/app.js",
+      "api": "dist/api.js"
+    },
+    "entries": [
+      {
+        "type": "module",
+        "name": "flow-debugger-module",
+        "source": "src/module/index.js"
+      },
+      {
+        "type": "endpoint",
+        "name": "flow-debugger",
+        "source": "src/api/index.js"
+      }
+    ],
+    "host": "^10.10.0 || ^11.0.0 || ^12.0.0"
+  },
+  "scripts": {
+    "build": "directus-extension build",
+    "dev": "directus-extension build -w --no-minify",
+    "link": "directus-extension link",
+    "validate": "directus-extension validate",
+    "test": "node --test src/**/*.test.js"
+  },
+  "peerDependencies": {
+    "directus": "^10.10.0 || ^11.0.0 || ^12.0.0"
+  },
+  "devDependencies": {
+    "@directus/extensions-sdk": "14.0.0",
+    "vue": "^3.5.17"
+  }
+}

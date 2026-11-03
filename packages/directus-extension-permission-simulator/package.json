@@ -1,0 +1,78 @@
+{
+  "name": "directus-extension-permission-simulator",
+  "version": "1.0.0",
+  "description": "Simulate Directus permissions for any role or user without logging in as them",
+  "icon": "security",
+  "license": "MIT",
+  "author": {
+    "name": "11Vertex",
+    "url": "https://github.com/11Vertex"
+  },
+  "contributors": [
+    {
+      "name": "Kashyap Thaker",
+      "url": "https://github.com/kashyap-thakar"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/11Vertex/directus-extensions.git",
+    "directory": "packages/directus-extension-permission-simulator"
+  },
+  "homepage": "https://github.com/11Vertex/directus-extensions/tree/main/packages/directus-extension-permission-simulator#readme",
+  "bugs": {
+    "url": "https://github.com/11Vertex/directus-extensions/issues"
+  },
+  "keywords": [
+    "directus",
+    "directus-extension",
+    "directus-extension-bundle",
+    "directus-extension-module",
+    "permissions",
+    "policies",
+    "access-control",
+    "simulator"
+  ],
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "directus:extension": {
+    "type": "bundle",
+    "path": {
+      "app": "dist/app.js",
+      "api": "dist/api.js"
+    },
+    "entries": [
+      {
+        "type": "module",
+        "name": "permission-simulator-module",
+        "source": "src/module/index.js"
+      },
+      {
+        "type": "endpoint",
+        "name": "permission-simulator",
+        "source": "src/api/index.js"
+      }
+    ],
+    "host": "^11.0.0 || ^12.0.0"
+  },
+  "scripts": {
+    "build": "directus-extension build",
+    "dev": "directus-extension build -w --no-minify",
+    "link": "directus-extension link",
+    "validate": "directus-extension validate",
+    "test": "node --test src/**/*.test.js"
+  },
+  "peerDependencies": {
+    "@directus/api": "*",
+    "directus": "^11.0.0 || ^12.0.0"
+  },
+  "devDependencies": {
+    "@directus/api": "40.0.0",
+    "@directus/extensions-sdk": "14.0.0",
+    "vue": "^3.5.17"
+  }
+}

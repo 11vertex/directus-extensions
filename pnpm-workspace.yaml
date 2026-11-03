@@ -1,0 +1,24 @@
+packages:
+  - "packages/*"
+
+allowBuilds:
+  argon2: true
+  braintrust: false
+  esbuild: true
+  isolated-vm: true
+  oracledb: false
+  protobufjs: false
+  sqlite3: true
+  vue-demi: true
+
+onlyBuiltDependencies:
+  - argon2
+  - braintrust
+  - esbuild
+  - isolated-vm
+  - oracledb
+  - protobufjs
+  - sqlite3
+
+overrides:
+  isolated-vm: 7.0.1

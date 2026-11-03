@@ -1,0 +1,62 @@
+{
+  "name": "directus-extension-slack-operation",
+  "version": "1.0.0",
+  "description": "Send Slack messages from Directus Flows via incoming webhooks or a bot token",
+  "icon": "tag",
+  "license": "MIT",
+  "author": {
+    "name": "11Vertex",
+    "url": "https://github.com/11Vertex"
+  },
+  "contributors": [
+    {
+      "name": "Kashyap Thaker",
+      "url": "https://github.com/kashyap-thakar"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/11Vertex/directus-extensions.git",
+    "directory": "packages/directus-extension-slack-operation"
+  },
+  "homepage": "https://github.com/11Vertex/directus-extensions/tree/main/packages/directus-extension-slack-operation#readme",
+  "bugs": {
+    "url": "https://github.com/11Vertex/directus-extensions/issues"
+  },
+  "keywords": [
+    "directus",
+    "directus-extension",
+    "directus-custom-operation",
+    "slack",
+    "webhook",
+    "block-kit"
+  ],
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "directus:extension": {
+    "type": "operation",
+    "path": {
+      "app": "dist/app.js",
+      "api": "dist/api.js"
+    },
+    "source": {
+      "app": "src/app.js",
+      "api": "src/api.js"
+    },
+    "host": "^10.10.0 || ^11.0.0 || ^12.0.0"
+  },
+  "scripts": {
+    "build": "directus-extension build",
+    "dev": "directus-extension build -w --no-minify",
+    "link": "directus-extension link",
+    "validate": "directus-extension validate",
+    "test": "node --test src/**/*.test.js"
+  },
+  "devDependencies": {
+    "@directus/extensions-sdk": "14.0.0"
+  }
+}
