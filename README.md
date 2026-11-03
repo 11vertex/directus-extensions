@@ -32,7 +32,7 @@ Refer to the official guides for installing an extension from the [Marketplace](
 
 ## Developing
 
-This repository is a pnpm workspace; every extension lives in `packages/`.
+This repository is a pnpm workspace (Node.js 26, see `.nvmrc`); every extension lives in `packages/`.
 
 ```bash
 pnpm install
