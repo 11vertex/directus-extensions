@@ -1,4 +1,4 @@
-# Slack Operation
+# Slack Operation for Directus
 
 Send messages to Slack from your Directus Flows, as plain text or Block Kit layouts, using an incoming webhook or a Slack bot.
 

@@ -1,4 +1,4 @@
-# Permission Simulator
+# Permission Simulator for Directus
 
 See what any role or user can do in Directus without logging in as them. One table shows who can create, read, update and delete what, in plain language.
 

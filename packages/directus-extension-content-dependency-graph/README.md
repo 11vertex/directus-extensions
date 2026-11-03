@@ -1,4 +1,4 @@
-# Content Dependency Graph
+# Content Dependency Graph for Directus
 
 See how your Directus collections and items are connected, check what deleting an item would do before you delete it, and find content that nothing uses.
 

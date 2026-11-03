@@ -1,7 +1,7 @@
 {
   "name": "@11vertex/directus-extension-permission-simulator",
-  "version": "1.0.0",
-  "description": "Simulate Directus permissions for any role or user without logging in as them",
+  "version": "1.0.1",
+  "description": "Directus permission simulator: see what any role or user can create, read, update and delete, and compare roles, without logging in as them",
   "icon": "security",
   "license": "MIT",
   "author": {
@@ -29,15 +29,20 @@
     "directus-extension-bundle",
     "directus-extension-module",
     "permissions",
-    "policies",
+    "access-policies",
+    "rbac",
+    "roles",
     "access-control",
-    "simulator"
+    "permission-checker",
+    "simulator",
+    "admin-tool"
   ],
   "type": "module",
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "directus:extension": {
     "type": "bundle",

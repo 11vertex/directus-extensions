@@ -1,4 +1,4 @@
-# Media Usage Analyzer
+# Media Usage Analyzer for Directus
 
 Find unused and duplicate files, broken file links and large images in your Directus project, see where your storage goes, and clean up safely.
 

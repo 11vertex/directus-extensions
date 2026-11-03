@@ -1,7 +1,7 @@
 {
   "name": "@11vertex/directus-extension-permission-auditor",
-  "version": "1.0.0",
-  "description": "Scan every Directus role and policy for risky or inconsistent access and export an audit report",
+  "version": "1.0.1",
+  "description": "Directus permission auditor: scan every role and policy for risky access, such as public data, unrestricted deletes and admins without 2FA, with fixes",
   "icon": "policy",
   "license": "MIT",
   "author": {
@@ -29,15 +29,20 @@
     "directus-extension-bundle",
     "directus-extension-module",
     "permissions",
-    "policies",
+    "access-policies",
     "security",
-    "audit"
+    "audit",
+    "security-audit",
+    "rbac",
+    "compliance",
+    "admin-tool"
   ],
   "type": "module",
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "directus:extension": {
     "type": "bundle",

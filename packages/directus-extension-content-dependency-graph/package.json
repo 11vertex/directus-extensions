@@ -1,7 +1,7 @@
 {
   "name": "@11vertex/directus-extension-content-dependency-graph",
-  "version": "1.0.0",
-  "description": "Visualize relationships between Directus collections and records, find orphans and analyze deletion impact",
+  "version": "1.0.1",
+  "description": "Directus content dependency graph: see how collections and items connect, preview what a delete would do, and find orphaned or broken content",
   "icon": "account_tree",
   "license": "MIT",
   "author": {
@@ -27,16 +27,22 @@
     "directus",
     "directus-extension",
     "directus-extension-bundle",
+    "directus-extension-module",
     "relations",
-    "graph",
-    "dependencies",
-    "orphans"
+    "dependency-graph",
+    "data-model",
+    "orphans",
+    "delete-impact",
+    "schema",
+    "visualization",
+    "admin-tool"
   ],
   "type": "module",
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "directus:extension": {
     "type": "bundle",
