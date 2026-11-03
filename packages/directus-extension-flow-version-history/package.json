@@ -1,5 +1,5 @@
 {
-  "name": "directus-extension-flow-version-history",
+  "name": "@11vertex/directus-extension-flow-version-history",
   "version": "1.0.0",
   "description": "Browse and compare native Directus Flow and operation definition revisions",
   "icon": "history",
@@ -71,5 +71,8 @@
   "devDependencies": {
     "@directus/extensions-sdk": "14.0.0",
     "vue": "^3.5.17"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

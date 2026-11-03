@@ -17,10 +17,14 @@
     "build": "pnpm -r run build",
     "validate": "pnpm -r run validate",
     "test": "pnpm -r --if-present run test",
-    "test:integration": "node --test --test-concurrency=1 --test-global-setup=tests/integration/global-setup.mjs \"tests/integration/*.test.mjs\""
+    "test:integration": "node --test --test-concurrency=1 --test-global-setup=tests/integration/global-setup.mjs \"tests/integration/*.test.mjs\"",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "node scripts/publish.mjs"
   },
   "devDependencies": {
-    "directus": "^12.5.0"
+    "directus": "^12.5.0",
+    "@changesets/cli": "3.0.3"
   },
   "packageManager": "pnpm@11.20.0+sha512.9a6f330a95b66446ea088faf1521405a8a01f07fde7124cc9958dfed52d4bb436737e65b08f85f37b46fcba375092558ac51262b816844b22f63406ed166bfee"
 }

@@ -1,5 +1,5 @@
 {
-  "name": "directus-extension-content-dependency-graph",
+  "name": "@11vertex/directus-extension-content-dependency-graph",
   "version": "1.0.0",
   "description": "Visualize relationships between Directus collections and records, find orphans and analyze deletion impact",
   "icon": "account_tree",
@@ -71,5 +71,8 @@
   "devDependencies": {
     "@directus/extensions-sdk": "14.0.0",
     "vue": "^3.5.17"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

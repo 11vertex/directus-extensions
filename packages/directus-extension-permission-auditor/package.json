@@ -1,5 +1,5 @@
 {
-  "name": "directus-extension-permission-auditor",
+  "name": "@11vertex/directus-extension-permission-auditor",
   "version": "1.0.0",
   "description": "Scan every Directus role and policy for risky or inconsistent access and export an audit report",
   "icon": "policy",
@@ -72,5 +72,8 @@
   "devDependencies": {
     "@directus/extensions-sdk": "14.0.0",
     "vue": "^3.5.17"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

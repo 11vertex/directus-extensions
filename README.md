@@ -56,7 +56,13 @@ The integration suite starts its own temporary Directus and never touches yours;
 ## Contributing
 
 Issues and pull requests are welcome. Please run `pnpm build`, `pnpm test` and
-`pnpm test:integration` before opening a pull request.
+`pnpm test:integration`, and add a changeset (`pnpm changeset`) describing your change.
+
+## Versioning
+
+Each extension is versioned on its own with [semantic versioning](https://semver.org) and has its own
+`CHANGELOG.md`. Releases are managed with [Changesets](https://github.com/changesets/changesets) and
+published to npm under the [`@11vertex`](https://www.npmjs.com/org/11vertex) scope.
 
 ## License
 
