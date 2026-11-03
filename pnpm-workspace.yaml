@@ -19,6 +19,3 @@ onlyBuiltDependencies:
   - oracledb
   - protobufjs
   - sqlite3
-
-overrides:
-  isolated-vm: 7.0.1

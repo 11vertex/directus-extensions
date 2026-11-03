@@ -1,8 +1,8 @@
-import { defineEndpoint } from "@directus/extensions-sdk";
 import { getOverview, getRetention, purge } from "./cleanup-engine.js";
 import { registerRoutes } from "./routes.js";
 
-export default defineEndpoint((router, context) => {
+// Endpoints are plain functions; the SDK helper is a no-op that would pull a large validator into the bundle.
+export default (router, context) => {
   registerRoutes(
     router,
     {
@@ -14,4 +14,4 @@ export default defineEndpoint((router, context) => {
     },
     { getOverview, getRetention, purge }
   );
-});
+};

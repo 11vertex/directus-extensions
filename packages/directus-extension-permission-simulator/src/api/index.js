@@ -1,4 +1,3 @@
-import { defineEndpoint } from "@directus/extensions-sdk";
 import {
   comparePermissions,
   listCollections,
@@ -7,12 +6,15 @@ import {
   simulatePermissions
 } from "./permission-engine.js";
 import { registerRoutes } from "./routes.js";
-var index_default = defineEndpoint((router, context) => {
+
+// Endpoints are plain functions; the SDK helper is a no-op that would pull a large validator into the bundle.
+export default (router, context) => {
   const engineContext = {
     services: context.services,
     database: context.database,
     getSchema: context.getSchema
   };
+
   registerRoutes(router, engineContext, {
     listUsers,
     listRoles,
@@ -20,7 +22,4 @@ var index_default = defineEndpoint((router, context) => {
     simulatePermissions,
     comparePermissions
   });
-});
-export {
-  index_default as default
 };

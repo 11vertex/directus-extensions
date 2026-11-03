@@ -64,7 +64,7 @@
     "test": "node --test src/**/*.test.js"
   },
   "devDependencies": {
-    "@directus/extensions-sdk": "14.0.0"
+    "@directus/extensions-sdk": "18.1.0"
   },
   "publishConfig": {
     "access": "public"

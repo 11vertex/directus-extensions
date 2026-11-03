@@ -76,8 +76,8 @@
     "directus": "^11.0.0 || ^12.0.0"
   },
   "devDependencies": {
-    "@directus/api": "40.0.0",
-    "@directus/extensions-sdk": "14.0.0",
+    "@directus/api": "41.0.0",
+    "@directus/extensions-sdk": "18.1.0",
     "vue": "^3.5.17"
   },
   "publishConfig": {

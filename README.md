@@ -1,6 +1,6 @@
 # Directus Extensions by 11Vertex
 
-Free, open-source extensions for [Directus](https://directus.io) 10.10+ (the two permission tools need Directus 11+; all tested with Directus 12.5).
+Free, open-source extensions for [Directus](https://directus.io) 10.10+ (the two permission tools need Directus 11+; all tested with Directus 12.6).
 Each one is published to npm and the Directus Marketplace on its own, so you can install just the ones
 you need.
 

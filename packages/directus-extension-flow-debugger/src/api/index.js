@@ -1,4 +1,3 @@
-import { defineEndpoint } from "@directus/extensions-sdk";
 import {
   compareExecutions,
   getExecution,
@@ -7,7 +6,8 @@ import {
 } from "./flow-engine.js";
 import { registerRoutes } from "./routes.js";
 
-export default defineEndpoint((router, context) => {
+// Endpoints are plain functions; the SDK helper is a no-op that would pull a large validator into the bundle.
+export default (router, context) => {
   const engineContext = {
     services: context.services,
     database: context.database,
@@ -20,4 +20,4 @@ export default defineEndpoint((router, context) => {
     getExecution,
     compareExecutions
   });
-});
+};
