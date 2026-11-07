@@ -64,43 +64,6 @@ function parseActivityId(value, field = "activityId") {
   return Number(id);
 }
 
-function parseCompareQuery(query = {}) {
-  const input = query && typeof query === "object" ? query : {};
-  const leftId = parseActivityId(input.leftId, "leftId");
-  const rightId = parseActivityId(input.rightId, "rightId");
-  if (leftId === rightId) {
-    throw validationError("Select two different revisions to compare.");
-  }
-  return { leftId, rightId };
-}
-
-function parseGraphQuery(query = {}) {
-  const input = query && typeof query === "object" ? query : {};
-  const flowId = requireUuid(input.flowId, "flowId");
-  const result = {
-    flowId,
-    activityId: null,
-    asOfTimestamp: null
-  };
-
-  if (input.activityId !== void 0 && input.activityId !== null && input.activityId !== "") {
-    result.activityId = parseActivityId(input.activityId, "activityId");
-  }
-
-  if (input.asOf !== void 0 && input.asOf !== null && input.asOf !== "") {
-    if (typeof input.asOf !== "string") {
-      throw validationError("asOf must be an ISO timestamp string.");
-    }
-    const parsed = Date.parse(input.asOf);
-    if (!Number.isFinite(parsed)) {
-      throw validationError("asOf must be a valid ISO timestamp.");
-    }
-    result.asOfTimestamp = new Date(parsed).toISOString();
-  }
-
-  return result;
-}
-
 function requireUuid(value, field) {
   if (typeof value !== "string" || !UUID_RE.test(value.trim())) {
     throw validationError(`${field} must be a valid UUID.`);
@@ -123,10 +86,13 @@ function validationError(message) {
   return error;
 }
 
+function parseRestoreBody(body) {
+  return { flowId: requireUuid(body?.flowId, "flowId") };
+}
+
 export {
   assertAdmin,
   parseActivityId,
-  parseCompareQuery,
-  parseGraphQuery,
+  parseRestoreBody,
   parseHistoryQuery
 };

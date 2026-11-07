@@ -28,7 +28,8 @@ const OPERATION_CONTENT_KEYS = [
  * Reconstruct a read-only flow graph as of a point in time from chronological
  * activity/revision rows. Relational edges only appear when present in deltas.
  */
-function buildDefinitionProjection({ flowId, asOfTimestamp, activities }) {
+function buildDefinitionProjection({ flowId, asOfTimestamp, activities, redact = true }) {
+  const hide = redact ? redactValue : (value) => value;
   const asOf = Date.parse(asOfTimestamp);
   const chronological = [...activities]
     .filter((activity) => {
@@ -125,13 +126,13 @@ function buildDefinitionProjection({ flowId, asOfTimestamp, activities }) {
     asOfTimestamp: asOfTimestamp ?? null,
     flowExists,
     confidence: sawEdge ? "partial" : "content_only",
-    flow: redactValue({
+    flow: hide({
       ...pick(flow, FLOW_CONTENT_KEYS),
       operation: flow.operation ?? null
     }),
     operations: [...operations.values()]
       .map((operation) =>
-        redactValue({
+        hide({
           ...pick(operation, OPERATION_CONTENT_KEYS),
           flow: flowId,
           resolve: operation.resolve ?? null,

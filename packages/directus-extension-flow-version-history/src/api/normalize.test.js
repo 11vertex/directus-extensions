@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
-  compareHistoryEvents,
   computeLastEdited,
   describeRevisionChanges,
   diffValues,
@@ -130,38 +129,6 @@ describe("revision diffs", () => {
         }
       ]
     );
-  });
-
-  it("compares two revisions of the same entity", () => {
-    const left = normalizeHistoryEvent(activity());
-    const right = normalizeHistoryEvent(
-      activity({
-        id: 11,
-        revisions: [
-          {
-            id: 21,
-            data: {
-              id: OP_ID,
-              flow: FLOW_ID,
-              name: "Send webhook",
-              type: "request",
-              options: { url: "https://other.example.com" }
-            },
-            delta: { options: { url: "https://other.example.com" } }
-          }
-        ]
-      })
-    );
-    const result = compareHistoryEvents(left, right);
-    assert.equal(result.differences[0].path, "options.url");
-  });
-
-  it("rejects comparing different entities", () => {
-    const left = normalizeHistoryEvent(activity());
-    const right = normalizeHistoryEvent(
-      activity({ item: "22222222-2222-4222-8222-222222222222" })
-    );
-    assert.throws(() => compareHistoryEvents(left, right), (error) => error.status === 400);
   });
 });
 

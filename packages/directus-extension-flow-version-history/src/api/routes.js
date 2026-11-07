@@ -1,9 +1,8 @@
 import {
   assertAdmin,
   parseActivityId,
-  parseCompareQuery,
-  parseGraphQuery,
-  parseHistoryQuery
+  parseHistoryQuery,
+  parseRestoreBody
 } from "./validation.js";
 
 function registerRoutes(router, engineContext, engine) {
@@ -16,8 +15,7 @@ function registerRoutes(router, engineContext, engine) {
           "This extension reads native activity/revisions and creates no tables.",
           "Flow and operation edits are stored as separate events.",
           "Delete activity has no revision snapshot in Directus.",
-          "Graph cards reconstruct history; edges may be incomplete.",
-          "Restore is intentionally not supported."
+          "Graph cards reconstruct history; edges may be incomplete."
         ]
       });
     } catch (error) {
@@ -35,31 +33,22 @@ function registerRoutes(router, engineContext, engine) {
     }
   });
 
-  router.get("/graph", async (req, res) => {
-    try {
-      assertAdmin(req.accountability);
-      const query = parseGraphQuery(req.query);
-      res.json(await engine.getFlowGraph(query, engineContext));
-    } catch (error) {
-      sendError(res, error);
-    }
-  });
-
-  router.get("/compare", async (req, res) => {
-    try {
-      assertAdmin(req.accountability);
-      const request = parseCompareQuery(req.query);
-      res.json(await engine.compareHistory(request, engineContext));
-    } catch (error) {
-      sendError(res, error);
-    }
-  });
-
   router.get("/history/:id", async (req, res) => {
     try {
       assertAdmin(req.accountability);
       const id = parseActivityId(req.params?.id);
       res.json(await engine.getHistoryDetail(id, engineContext));
+    } catch (error) {
+      sendError(res, error);
+    }
+  });
+
+  router.post("/restore/:id", async (req, res) => {
+    try {
+      assertAdmin(req.accountability);
+      const activityId = parseActivityId(req.params?.id);
+      const { flowId } = parseRestoreBody(req.body);
+      res.json(await engine.restoreFlow({ flowId, activityId, accountability: req.accountability }, engineContext));
     } catch (error) {
       sendError(res, error);
     }

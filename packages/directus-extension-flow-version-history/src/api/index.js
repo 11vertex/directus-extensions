@@ -1,9 +1,8 @@
 import {
-  compareHistory,
-  getFlowGraph,
   getHistoryDetail,
   listFlows,
-  listHistory
+  listHistory,
+  restoreFlow
 } from "./history-engine.js";
 import { registerRoutes } from "./routes.js";
 
@@ -18,7 +17,6 @@ export default (router, context) => {
     listFlows,
     listHistory,
     getHistoryDetail,
-    getFlowGraph,
-    compareHistory
+    restoreFlow
   });
 };

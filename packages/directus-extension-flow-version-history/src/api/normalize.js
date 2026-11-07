@@ -14,9 +14,6 @@ function normalizeHistoryEvent(activity, context = {}) {
   const current = context.currentByEntity?.get(`${collection}:${itemId}`) ?? null;
   const snapshot = redactValue(rawSnapshot);
   const delta = redactValue(rawDelta);
-  const comparableCurrent = current
-    ? redactValue(stripRelationalFields(current, collection))
-    : null;
 
   return {
     id: Number(activity.id),
@@ -27,6 +24,7 @@ function normalizeHistoryEvent(activity, context = {}) {
     flowId,
     timestamp: activity.timestamp ?? null,
     actor: normalizeActor(activity.user),
+    comment: typeof activity.comment === "string" ? activity.comment : null,
     ip: activity.ip ?? null,
     origin: activity.origin ?? null,
     revisionId: revision?.id ?? null,
@@ -39,8 +37,8 @@ function normalizeHistoryEvent(activity, context = {}) {
     delta,
     changedFields: Object.keys(delta ?? {}).sort((a, b) => a.localeCompare(b)),
     entityLabel: entityLabel(entity, itemId, snapshot, current),
-    currentExists: Boolean(current),
-    currentDiff: comparableCurrent ? diffValues(snapshot, comparableCurrent) : []
+    stepType: entity === "operation" ? (snapshot?.type ?? delta?.type ?? current?.type ?? null) : null,
+    currentExists: Boolean(current)
   };
 }
 
@@ -60,32 +58,7 @@ function toHistorySummary(event) {
   const summary = { ...event };
   delete summary.snapshot;
   delete summary.delta;
-  delete summary.currentDiff;
   return summary;
-}
-
-function compareHistoryEvents(left, right) {
-  if (left.collection !== right.collection || left.itemId !== right.itemId) {
-    const error = new Error(
-      "Revisions must belong to the same flow or operation to compare."
-    );
-    error.status = 400;
-    throw error;
-  }
-
-  return {
-    collection: left.collection,
-    entity: left.entity,
-    itemId: left.itemId,
-    entityLabel: right.entityLabel || left.entityLabel,
-    left: eventIdentity(left),
-    right: eventIdentity(right),
-    differences: diffValues(left.snapshot, right.snapshot),
-    caveats: [
-      "Directus revision snapshots omit relational graph edges (resolve/reject/flow/operation).",
-      "Compare content fields only; topology may be incomplete."
-    ]
-  };
 }
 
 function diffValues(left, right) {
@@ -312,7 +285,6 @@ function unique(values) {
 }
 
 export {
-  compareHistoryEvents,
   computeLastEdited,
   describeRevisionChanges,
   diffValues,

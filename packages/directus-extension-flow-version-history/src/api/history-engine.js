@@ -1,5 +1,4 @@
 import {
-  compareHistoryEvents,
   computeLastEdited,
   describeRevisionChanges,
   findPreviousSnapshotActivity,
@@ -117,6 +116,8 @@ async function listHistory(query, context) {
     .filter((event) => event.flowId === query.flowId)
     .sort((left, right) => String(right.timestamp).localeCompare(String(left.timestamp)));
 
+  events = await markReverts(events, query.flowId, context);
+
   if (query.action) events = events.filter((event) => event.action === query.action);
   if (query.entity) events = events.filter((event) => event.entity === query.entity);
   if (query.search) {
@@ -217,7 +218,7 @@ async function getHistoryDetail(activityId, context) {
   return detail;
 }
 
-async function getFlowGraph(query, context) {
+async function getFlowGraph(query, context, { redact = true } = {}) {
   const schema = await context.getSchema();
   const current = await loadCurrentDefinition(query.flowId, context, schema);
   const flow = current.currentByEntity.get(`directus_flows:${query.flowId}`) ?? null;
@@ -249,8 +250,94 @@ async function getFlowGraph(query, context) {
   return buildDefinitionProjection({
     flowId: query.flowId,
     asOfTimestamp,
-    activities: [...byId.values()]
+    activities: [...byId.values()],
+    redact
   });
+}
+
+const REVERT_NOTE = "Reverted to the version from";
+const FLOW_RESTORE_KEYS = ["name", "icon", "color", "description", "status", "trigger", "accountability", "options"];
+const OPERATION_RESTORE_KEYS = ["name", "key", "type", "position_x", "position_y", "options"];
+
+// Puts a flow back the way it was after the given change: its settings, its steps and how they connect.
+// The restore is saved as ordinary edits by the person who ran it, so it shows up in the history too.
+async function restoreFlow({ flowId, activityId, accountability }, context) {
+  const schema = await context.getSchema();
+  const graph = await getFlowGraph({ flowId, activityId }, context, { redact: false });
+  if (!graph.flowExists) throw restoreError("The flow did not exist at that point.");
+  if (graph.operations.length > 0 && graph.confidence === "content_only") {
+    throw restoreError("The history does not say how the steps were connected at that point, so it cannot be restored safely.");
+  }
+
+  const make = (Service) => new Service({ schema, accountability, knex: context.database });
+  const flows = make(context.services.FlowsService);
+  const operations = make(context.services.OperationsService);
+  const pickKeys = (source, keys) => Object.fromEntries(keys.filter((key) => source[key] !== undefined).map((key) => [key, source[key]]));
+
+  const existing = await operations.readByQuery({ filter: { flow: { _eq: flowId } }, fields: ["id"], limit: -1 });
+  const existingIds = new Set(existing.map((operation) => String(operation.id)));
+  const targetIds = new Set(graph.operations.map((operation) => String(operation.id)));
+
+  // Unplug everything first so steps can be removed and created in any order.
+  await flows.updateOne(flowId, { operation: null });
+  for (const id of existingIds) await operations.updateOne(id, { resolve: null, reject: null });
+
+  const removed = [...existingIds].filter((id) => !targetIds.has(id));
+  if (removed.length > 0) await operations.deleteMany(removed);
+
+  for (const operation of graph.operations) {
+    const content = pickKeys(operation, OPERATION_RESTORE_KEYS);
+    if (existingIds.has(String(operation.id))) await operations.updateOne(operation.id, content);
+    else await operations.createOne({ ...content, id: operation.id, flow: flowId, resolve: null, reject: null });
+  }
+  for (const operation of graph.operations) {
+    await operations.updateOne(operation.id, { resolve: operation.resolve ?? null, reject: operation.reject ?? null });
+  }
+  await flows.updateOne(flowId, { ...pickKeys(graph.flow, FLOW_RESTORE_KEYS), operation: graph.flow.operation ?? null });
+
+  // Directus keeps no note on activity rows, so leave one on the flow. The history reads it to show the revert.
+  await make(context.services.CommentsService).createOne({
+    collection: "directus_flows",
+    item: flowId,
+    comment: `${REVERT_NOTE} ${graph.asOfTimestamp}`
+  });
+
+  return { restored: true, steps: graph.operations.length, removed: removed.length };
+}
+
+// A restore leaves a note on the flow just after its changes; the changes it made get that note as their comment.
+async function markReverts(events, flowId, context) {
+  let notes = [];
+  try {
+    const schema = await context.getSchema();
+    notes = await createService(context.services.CommentsService, context, schema).readByQuery({
+      filter: {
+        _and: [
+          { collection: { _eq: "directus_flows" } },
+          { item: { _eq: flowId } },
+          { comment: { _starts_with: REVERT_NOTE } }
+        ]
+      },
+      fields: ["comment", "date_created", "user_created"],
+      limit: -1
+    });
+  } catch {
+    return events;
+  }
+  if (notes.length === 0) return events;
+  return events.map((event) => {
+    const note = notes.find((candidate) => {
+      const gap = Date.parse(candidate.date_created) - Date.parse(event.timestamp);
+      return gap >= -1000 && gap <= 10000 && String(candidate.user_created ?? "") === String(event.actor?.id ?? "");
+    });
+    return note ? { ...event, comment: note.comment } : event;
+  });
+}
+
+function restoreError(message) {
+  const error = new Error(message);
+  error.status = 409;
+  return error;
 }
 
 function changesSincePrevious(event, previousActivity) {
@@ -281,19 +368,6 @@ async function readPreviousSnapshotActivity(activity, context, schema) {
     limit: 5
   });
   return findPreviousSnapshotActivity(activity, candidates);
-}
-
-async function compareHistory(request, context) {
-  const [left, right] = await Promise.all([
-    getHistoryDetail(request.leftId, context),
-    getHistoryDetail(request.rightId, context)
-  ]);
-  if (!left.snapshot || !right.snapshot) {
-    const error = new Error("Both changes need revision snapshots to compare.");
-    error.status = 400;
-    throw error;
-  }
-  return compareHistoryEvents(left, right);
 }
 
 async function loadFlowCorpus(flowId, context) {
@@ -612,9 +686,8 @@ function unique(values) {
 }
 
 export {
-  compareHistory,
-  getFlowGraph,
   getHistoryDetail,
   listFlows,
-  listHistory
+  listHistory,
+  restoreFlow
 };

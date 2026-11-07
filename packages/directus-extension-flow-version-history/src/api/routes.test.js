@@ -11,6 +11,9 @@ function createRouter() {
     router: {
       get(path, handler) {
         handlers.set(`GET ${path}`, handler);
+      },
+      post(path, handler) {
+        handlers.set(`POST ${path}`, handler);
       }
     }
   };
@@ -36,8 +39,6 @@ function engine(overrides = {}) {
     listFlows: async () => [],
     listHistory: async () => ({ items: [] }),
     getHistoryDetail: async () => ({}),
-    getFlowGraph: async () => ({ panels: [] }),
-    compareHistory: async () => ({}),
     ...overrides
   };
 }
@@ -97,42 +98,25 @@ describe("history routes", () => {
     assert.equal(res.body.items[0].flowId, FLOW_ID);
   });
 
-  it("returns comparison results", async () => {
+  it("restores only for administrators and passes who asked", async () => {
     const { router, handlers } = createRouter();
-    registerRoutes(
-      router,
-      {},
-      engine({
-        compareHistory: async (input) => ({ input, differences: [] })
-      })
-    );
-    const res = response();
-    await handlers.get("GET /compare")(
-      {
-        accountability: { admin: true },
-        query: { leftId: "1", rightId: "2" }
-      },
-      res
-    );
-    assert.deepEqual(res.body.input, { leftId: 1, rightId: 2 });
-  });
+    const calls = [];
+    registerRoutes(router, {}, engine({ restoreFlow: async (input) => { calls.push(input); return { restored: true }; } }));
+    const handler = handlers.get("POST /restore/:id");
 
-  it("returns a flow graph projection", async () => {
-    const { router, handlers } = createRouter();
-    registerRoutes(
-      router,
-      {},
-      engine({
-        getFlowGraph: async (query) => ({ flowId: query.flowId, panels: [{ id: "$trigger" }] })
-      })
-    );
-    const res = response();
-    await handlers.get("GET /graph")(
-      { accountability: { admin: true }, query: { flowId: FLOW_ID } },
-      res
-    );
-    assert.equal(res.statusCode, 200);
-    assert.equal(res.body.flowId, FLOW_ID);
-    assert.equal(res.body.panels[0].id, "$trigger");
+    const denied = response();
+    await handler({ accountability: { admin: false }, params: { id: "5" }, body: { flowId: FLOW_ID } }, denied);
+    assert.equal(denied.statusCode, 403);
+    assert.equal(calls.length, 0);
+
+    const bad = response();
+    await handler({ accountability: { admin: true }, params: { id: "5" }, body: {} }, bad);
+    assert.equal(bad.statusCode, 400);
+
+    const accountability = { admin: true, user: "u1" };
+    const ok = response();
+    await handler({ accountability, params: { id: "5" }, body: { flowId: FLOW_ID } }, ok);
+    assert.deepEqual(ok.body, { restored: true });
+    assert.deepEqual(calls, [{ flowId: FLOW_ID, activityId: 5, accountability }]);
   });
 });

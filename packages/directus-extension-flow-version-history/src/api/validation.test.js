@@ -3,7 +3,6 @@ import { describe, it } from "node:test";
 import {
   assertAdmin,
   parseActivityId,
-  parseCompareQuery,
   parseHistoryQuery
 } from "./validation.js";
 
@@ -45,19 +44,13 @@ describe("parseHistoryQuery", () => {
   });
 });
 
-describe("activity and compare ids", () => {
+describe("activity ids", () => {
   it("parses numeric ids", () => {
     assert.equal(parseActivityId("42"), 42);
-    assert.deepEqual(parseCompareQuery({ leftId: "1", rightId: "2" }), {
-      leftId: 1,
-      rightId: 2
-    });
   });
 
-  it("rejects the same comparison id", () => {
-    assert.throws(
-      () => parseCompareQuery({ leftId: "2", rightId: "2" }),
-      (error) => error.status === 400
-    );
+  it("rejects ids that are not numbers", () => {
+    assert.throws(() => parseActivityId("abc"), (error) => error.status === 400);
+    assert.throws(() => parseActivityId(undefined), (error) => error.status === 400);
   });
 });
