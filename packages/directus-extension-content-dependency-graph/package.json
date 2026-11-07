@@ -1,6 +1,6 @@
 {
   "name": "@11vertex/directus-extension-content-dependency-graph",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Directus content dependency graph: see how collections and items connect, preview what a delete would do, and find orphaned or broken content",
   "icon": "account_tree",
   "license": "MIT",
