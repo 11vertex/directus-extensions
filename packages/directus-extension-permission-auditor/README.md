@@ -4,9 +4,9 @@ Scan every policy and permission in your Directus project for risky access, with
 
 ## Features
 
-- **One verdict**: e.g. "3 problems to fix, 5 to review" or "No problems found"
-- **Grouped findings**: Fix now, Worth reviewing and Good to know
-- **How to fix**: every finding explains why it matters and links to the policy
+- **One verdict**: e.g. "3 problems to fix, 5 to review" or "No problems found", with a count per group
+- **Grouped findings**: Fix now, Worth reviewing and Good to know. Pick a group in the sidebar to show just that one
+- **How to fix**: every finding explains why it matters and has a button to open the policy
 - **Export**: download the report as JSON or CSV
 
 ## What it checks
@@ -21,7 +21,7 @@ These are hints, not proof of a vulnerability. Review each finding before changi
 
 ## Usage
 
-Once installed, enable the module in your Project Settings and open **Permission Auditor** from the module bar. The audit runs straight away. Use the refresh button to run it again, and **Export** to download the report.
+Once installed, enable the module in your Project Settings and open **Permission Auditor** from the module bar. The audit runs straight away. Use **Show** in the sidebar to look at one group, the refresh button in the header to run it again, and the download button to export the report.
 
 ## Requirements
 

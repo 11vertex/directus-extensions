@@ -8,11 +8,13 @@
 
 		<template #actions>
 			<template v-if="isAdmin">
+				<v-button v-tooltip.bottom="'Re-run audit'" rounded icon secondary :loading="loading" @click="runAudit">
+					<v-icon name="refresh" />
+				</v-button>
 				<v-menu v-if="audit" show-arrow placement="bottom-end">
 					<template #activator="{ toggle }">
-						<v-button secondary small @click="toggle">
-							<v-icon name="download" left small />
-							Export
+						<v-button v-tooltip.bottom="'Export'" rounded icon secondary @click="toggle">
+							<v-icon name="download" />
 						</v-button>
 					</template>
 					<v-list>
@@ -24,57 +26,74 @@
 						</v-list-item>
 					</v-list>
 				</v-menu>
-				<v-button v-tooltip.bottom="'Re-run audit'" rounded icon secondary :loading="loading" @click="runAudit">
-					<v-icon name="refresh" />
-				</v-button>
 			</template>
 		</template>
 
+		<template v-if="isAdmin" #navigation>
+			<div class="nav-activity">
+				<label class="field-label">Show</label>
+				<button type="button" class="nav-row" :class="{ active: filter === 'all' }" @click="filter = 'all'">
+					<v-icon name="list" small />
+					<span class="nav-text">All findings</span>
+					<span class="pill">{{ totalFindings }}</span>
+				</button>
+				<button
+					v-for="group in groups"
+					:key="group.id"
+					type="button"
+					class="nav-row"
+					:class="[group.id, { active: filter === group.id }]"
+					:disabled="!group.findings.length"
+					@click="filter = group.id"
+				>
+					<v-icon :name="group.icon" small />
+					<span class="nav-text">{{ group.title }}</span>
+					<span class="pill" :class="group.id">{{ group.findings.length }}</span>
+				</button>
+				<p v-if="audit" class="hint">
+					Checked {{ audit.summary.policies }} {{ audit.summary.policies === 1 ? 'policy' : 'policies' }}<template v-if="checkedAgo"> · {{ checkedAgo }}</template>
+				</p>
+			</div>
+		</template>
+
 		<div class="permission-auditor">
-			<v-notice v-if="!isAdmin" type="danger">Only administrators can use Permission Auditor.</v-notice>
+			<v-notice v-if="!isAdmin" type="danger" class="padded">Only administrators can use Permission Auditor.</v-notice>
 
 			<template v-else>
-				<div v-if="loading && !audit" class="state">
+				<div v-if="loading && !audit" class="state padded">
 					<v-progress-circular indeterminate />
 					<span>Checking every policy…</span>
 				</div>
 
-				<v-notice v-else-if="error && !audit" type="danger">
-					Couldn't run the audit: {{ error }}. Try “Re-run” in the top right.
+				<v-notice v-else-if="error && !audit" type="danger" class="padded">
+					Couldn't run the audit: {{ error }}. Use the refresh button to try again.
 				</v-notice>
 
 				<template v-else-if="audit">
-					<header class="verdict" :class="verdict.tone">
-						<v-icon :name="verdict.icon" />
-						<div>
+					<header class="run-bar">
+						<div class="run-title">
+							<v-icon :name="verdict.icon" :class="verdict.tone" />
 							<strong>{{ verdict.text }}</strong>
-							<p class="muted">
-								Checked {{ audit.summary.policies }}
-								{{ audit.summary.policies === 1 ? 'policy' : 'policies' }}
-								<template v-if="checkedAgo"> · {{ checkedAgo }}</template>
-							</p>
+							<span v-for="group in groups" :key="group.id">
+								<span v-if="group.findings.length" class="pill" :class="group.id">{{ group.findings.length }} {{ group.title.toLowerCase() }}</span>
+							</span>
 						</div>
 					</header>
 
-					<v-notice v-if="error" type="warning" class="spaced">Re-run failed: {{ error }}</v-notice>
+					<v-notice v-if="error" type="warning" class="padded">Re-run failed: {{ error }}</v-notice>
 
-					<template v-for="group in groups" :key="group.id">
-						<details v-if="group.findings.length" class="group" :class="group.id" :open="group.open">
-							<summary>
-								<v-icon :name="group.icon" small />
-								{{ group.title }}
-								<span class="count">{{ group.findings.length }}</span>
-							</summary>
+					<v-info v-if="!totalFindings" class="empty" icon="verified_user" title="No problems found" center>
+						Every policy looks fine. Run the audit again after changing permissions.
+					</v-info>
 
+					<div v-else class="findings">
+						<section v-for="group in shownGroups" :key="group.id" class="group" :class="group.id">
+							<h4 class="group-title">{{ group.title }}</h4>
 							<article v-for="finding in group.findings" :key="finding.id" class="finding">
-								<h3>{{ finding.title }}</h3>
-								<p>{{ finding.detail }}</p>
-								<p v-if="finding.hint" class="fix"><strong>How to fix:</strong> {{ finding.hint }}</p>
-								<footer>
-									<v-button secondary x-small :to="policyLink(finding)">
-										<v-icon name="open_in_new" left x-small />
-										Open policy{{ finding.policyName ? ` “${finding.policyName}”` : '' }}
-									</v-button>
+								<div class="finding-main">
+									<h3>{{ finding.title }}</h3>
+									<p>{{ finding.detail }}</p>
+									<p v-if="finding.hint" class="fix"><strong>How to fix:</strong> {{ finding.hint }}</p>
 									<details class="tech">
 										<summary>Technical details</summary>
 										<p class="mono">
@@ -83,10 +102,13 @@
 											><template v-if="finding.action"> · {{ finding.action }}</template>
 										</p>
 									</details>
-								</footer>
+								</div>
+								<v-button v-tooltip.bottom="`Open policy${finding.policyName ? ` “${finding.policyName}”` : ''}`" secondary small icon :to="policyLink(finding)">
+									<v-icon name="open_in_new" small />
+								</v-button>
 							</article>
-						</details>
-					</template>
+						</section>
+					</div>
 				</template>
 			</template>
 		</div>
@@ -109,6 +131,7 @@ const { useUserStore } = useStores();
 const userStore = useUserStore();
 const isAdmin = computed(() => userStore.currentUser?.admin_access === true);
 
+const filter = ref('all');
 const audit = ref(null);
 const loading = ref(false);
 const error = ref(null);
@@ -121,6 +144,11 @@ const groups = computed(() =>
 		findings: (audit.value?.findings ?? []).filter((finding) => group.severities.includes(finding.severity)),
 	})),
 );
+
+const shownGroups = computed(() =>
+	groups.value.filter((group) => group.findings.length && (filter.value === 'all' || filter.value === group.id)),
+);
+const totalFindings = computed(() => groups.value.reduce((total, group) => total + group.findings.length, 0));
 
 const verdict = computed(() => {
 	const [fix, review] = groups.value.map((group) => group.findings.length);
@@ -179,16 +207,128 @@ function exportReport(format) {
 	URL.revokeObjectURL(url);
 }
 </script>
-
 <style scoped>
 .permission-auditor {
-	padding: var(--content-padding);
-	padding-bottom: var(--content-padding-bottom);
-	max-width: 900px;
+	display: flex;
+	flex-direction: column;
+	height: calc(100vh - 64px);
+	min-height: 420px;
+}
+
+.padded {
+	margin: var(--content-padding);
+}
+
+.empty {
+	flex: 1;
 }
 
 .header-icon {
 	margin-right: 8px;
+}
+
+.nav-activity {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 12px 20px;
+}
+
+.field-label {
+	color: var(--theme--foreground-subdued);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.hint {
+	margin: 8px 2px 0;
+	color: var(--theme--foreground-subdued);
+	font-size: 12px;
+}
+
+.nav-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 8px 10px;
+	border: none;
+	border-left: 3px solid transparent;
+	border-radius: var(--theme--border-radius);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.nav-row:hover:not(:disabled) {
+	background: var(--theme--background-subdued);
+}
+
+.nav-row.active {
+	border-left-color: var(--theme--primary);
+	background: color-mix(in srgb, var(--theme--primary) 12%, transparent);
+}
+
+.nav-row:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.nav-text {
+	flex: 1;
+}
+
+.nav-row.fix .v-icon,
+.run-title .v-icon.danger {
+	color: var(--theme--danger);
+}
+
+.nav-row.review .v-icon,
+.run-title .v-icon.warning {
+	color: var(--theme--warning);
+}
+
+.run-title .v-icon.success {
+	color: var(--theme--success);
+}
+
+.run-bar {
+	display: flex;
+	align-items: center;
+	min-height: 64px;
+	padding: 12px var(--content-padding);
+	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
+}
+
+.run-title {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+.pill {
+	flex: none;
+	padding: 0 8px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 18px;
+	background: color-mix(in srgb, var(--pill, var(--theme--foreground-subdued)) 16%, transparent);
+	color: var(--pill, var(--theme--foreground-subdued));
+}
+
+.pill.fix {
+	--pill: var(--theme--danger);
+}
+
+.pill.review {
+	--pill: var(--theme--warning);
 }
 
 .state {
@@ -198,68 +338,44 @@ function exportReport(format) {
 	color: var(--theme--foreground-subdued);
 }
 
-.verdict {
-	display: flex;
-	align-items: center;
-	gap: 14px;
-	padding: 16px 20px;
-	margin-bottom: 24px;
-	border-radius: var(--theme--border-radius);
-	border: var(--theme--border-width) solid currentColor;
-	font-size: 18px;
+.findings {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
 }
 
-.verdict p {
-	margin: 2px 0 0;
-	font-size: 14px;
-}
-
-.verdict.danger { color: var(--theme--danger); }
-.verdict.warning { color: var(--theme--warning); }
-.verdict.success { color: var(--theme--success); }
-.verdict strong { color: var(--theme--foreground); }
-
-.spaced {
-	margin-bottom: 20px;
-}
-
-.group {
-	margin-bottom: 24px;
-}
-
-.group > summary {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	margin-bottom: 12px;
-	font-size: 16px;
-	font-weight: 600;
-	cursor: pointer;
-}
-
-.group.fix > summary .v-icon { color: var(--theme--danger); }
-.group.review > summary .v-icon { color: var(--theme--warning); }
-.group.info > summary .v-icon { color: var(--theme--foreground-subdued); }
-
-.count {
-	padding: 0 8px;
-	border-radius: 999px;
-	font-size: 12px;
-	background: var(--theme--background-normal);
+.group-title {
+	margin: 0;
+	padding: 8px var(--content-padding);
+	background: var(--theme--background-subdued);
 	color: var(--theme--foreground-subdued);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
 }
 
 .finding {
-	background: var(--theme--background-subdued);
-	border: var(--theme--border-width) solid var(--theme--border-color-subdued);
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 16px var(--content-padding);
+	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
 	border-left: 3px solid var(--theme--foreground-subdued);
-	border-radius: var(--theme--border-radius);
-	padding: 14px 18px;
-	margin-bottom: 10px;
 }
 
-.group.fix .finding { border-left-color: var(--theme--danger); }
-.group.review .finding { border-left-color: var(--theme--warning); }
+.group.fix .finding {
+	border-left-color: var(--theme--danger);
+}
+
+.group.review .finding {
+	border-left-color: var(--theme--warning);
+}
+
+.finding-main {
+	min-width: 0;
+}
 
 .finding h3 {
 	margin: 0;
@@ -275,12 +391,8 @@ function exportReport(format) {
 	font-size: 14px;
 }
 
-.finding footer {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 16px;
-	margin-top: 12px;
+.tech {
+	margin-top: 8px;
 }
 
 .tech summary {
@@ -292,10 +404,6 @@ function exportReport(format) {
 .tech p {
 	margin-top: 4px;
 	font-size: 12px;
-	color: var(--theme--foreground-subdued);
-}
-
-.muted {
 	color: var(--theme--foreground-subdued);
 }
 
