@@ -1,6 +1,6 @@
 {
   "name": "@11vertex/directus-extension-permission-simulator",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Directus permission simulator: see what any role or user can create, read, update and delete, and compare roles, without logging in as them",
   "icon": "security",
   "license": "MIT",
