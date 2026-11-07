@@ -1,6 +1,6 @@
 {
   "name": "@11vertex/directus-extension-permission-auditor",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Directus permission auditor: scan every role and policy for risky access, such as public data, unrestricted deletes and admins without 2FA, with fixes",
   "icon": "policy",
   "license": "MIT",
