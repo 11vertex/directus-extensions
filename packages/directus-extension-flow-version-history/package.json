@@ -1,6 +1,6 @@
 {
   "name": "@11vertex/directus-extension-flow-version-history",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Directus flow version history: see who changed a flow or step, when, with before and after values and the flow as it looked at that time",
   "icon": "history",
   "license": "MIT",
