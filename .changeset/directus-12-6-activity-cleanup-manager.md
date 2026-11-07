@@ -1,5 +1,5 @@
 ---
-"@11vertex/directus-extension-activity-cleanup-manager": patch
+"@11vertex/directus-extension-activity-cleanup-manager": minor
 ---
 
-Built with the current Directus extensions SDK and tested on Directus 12.6. The package is now much smaller to install.
+New layout: the status and retention settings are in the sidebar and the history table fills the page. Built with the current Directus extensions SDK and tested on Directus 12.6.

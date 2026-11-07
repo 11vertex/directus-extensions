@@ -4,7 +4,7 @@ See how much history (activity and revisions) each collection keeps, check wheth
 
 ## Features
 
-- **Status at a glance**: e.g. "History uses 1.2 GB (850,000 records). Automatic cleanup: Off"
+- **Status at a glance**: the sidebar shows e.g. "History uses 1.2 GB (850,000 records)" and whether automatic cleanup is on
 - **How to turn it on**: the exact settings to add when automatic cleanup is off
 - **History by collection**: record counts and the oldest record, including history of deleted collections
 - **Clean up one collection**: delete its history older than 30 days, 90 days, 1 year, or all of it
@@ -14,11 +14,11 @@ See how much history (activity and revisions) each collection keeps, check wheth
 
 Once installed, enable the module in your Project Settings and open **Activity Cleanup** from the module bar.
 
-1. Read the status line and, if automatic cleanup is off, open **How to turn it on**.
-2. Find the collection you want to clean up and click **Clean up**.
+1. The sidebar shows whether automatic cleanup is on and how much history there is. If it is off, **How to turn it on** shows the settings to add.
+2. The table lists each collection's history. Click **Clean up** on the one you want.
 3. Choose how old the history must be. The dialog shows how many records will be deleted; confirm to delete them.
 
-The current retention values are listed under **Retention settings** at the bottom.
+When cleanup is on, the sidebar button shows the current **Retention settings**.
 
 ## Configuration
 

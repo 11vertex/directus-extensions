@@ -8,6 +8,9 @@
 
 		<template #actions>
 			<template v-if="isAdmin">
+				<v-button v-tooltip.bottom="'Refresh'" rounded icon secondary :loading="loading" @click="loadOverview">
+					<v-icon name="refresh" />
+				</v-button>
 				<v-menu v-if="overview" show-arrow placement="bottom-end">
 					<template #activator="{ toggle }">
 						<v-button v-tooltip.bottom="'Export'" rounded icon secondary @click="toggle">
@@ -16,59 +19,66 @@
 					</template>
 					<v-list>
 						<v-list-item clickable @click="exportReport('csv')">
-							<v-list-item-icon><v-icon name="table_view" /></v-list-item-icon>
 							<v-list-item-content>Export as CSV</v-list-item-content>
 						</v-list-item>
 						<v-list-item clickable @click="exportReport('json')">
-							<v-list-item-icon><v-icon name="data_object" /></v-list-item-icon>
 							<v-list-item-content>Export as JSON</v-list-item-content>
 						</v-list-item>
 					</v-list>
 				</v-menu>
-				<v-button v-tooltip.bottom="'Refresh'" rounded icon :loading="loading" @click="loadOverview">
-					<v-icon name="refresh" />
-				</v-button>
 			</template>
 		</template>
 
-		<div class="cleanup-manager">
-			<v-notice v-if="!isAdmin" type="danger">Only administrators can use Activity Cleanup.</v-notice>
+		<template v-if="isAdmin" #navigation>
+			<div class="nav-activity">
+				<template v-if="overview">
+					<label class="field-label">Automatic cleanup</label>
+					<div>
+						<span class="pill" :class="status.on ? 'on' : 'off'">{{ status.cleanup }}</span>
+					</div>
+					<p class="hint">{{ status.usage }}</p>
+					<p v-if="tip" class="hint">{{ tip }}</p>
+					<v-button class="nav-button" secondary small full-width @click="settingsOpen = true">
+						{{ status.on ? 'Retention settings' : 'How to turn it on' }}
+					</v-button>
+				</template>
+				<p v-else class="hint">{{ loading ? 'Counting history records…' : '' }}</p>
+			</div>
+		</template>
 
-			<div v-else-if="!overview && loading" class="state">
+		<div class="cleanup-manager">
+			<v-notice v-if="!isAdmin" type="danger" class="padded">Only administrators can use Activity Cleanup.</v-notice>
+
+			<div v-else-if="!overview && loading" class="state padded">
 				<v-progress-circular indeterminate />
-				<p class="muted">Counting history records…</p>
+				<span>Counting history records…</span>
 			</div>
 
-			<v-notice v-else-if="!overview && error" type="danger">Couldn't load history: {{ error }} Try "Refresh".</v-notice>
+			<v-notice v-else-if="!overview && error" type="danger" class="padded">
+				Couldn't load history: {{ error }} Try the refresh button.
+			</v-notice>
 
 			<template v-else-if="overview">
-				<v-notice v-if="error" type="danger" class="notice">{{ error }}</v-notice>
+				<header class="run-bar">
+					<div class="run-title">
+						<strong>History by collection</strong>
+						<span class="pill" :class="status.on ? 'on' : 'off'">Cleanup {{ status.on ? 'on' : 'off' }}</span>
+						<span class="muted">{{ collections.length }} {{ collections.length === 1 ? 'collection' : 'collections' }}</span>
+					</div>
+				</header>
 
-				<section class="status panel">
-					<p class="status-line">
-						<v-icon :name="status.on ? 'check_circle' : 'warning'" :class="status.on ? 'success-text' : 'warning-text'" />
-						<span>
-							{{ status.usage }} Automatic cleanup:
-							<strong :class="status.on ? 'success-text' : 'warning-text'">{{ status.cleanup }}</strong>
-						</span>
-					</p>
-					<p v-if="tip" class="tip muted">
-						<v-icon name="lightbulb" small />
-						{{ tip }}
-					</p>
-					<details v-if="!status.on" class="how-to">
-						<summary>How to turn it on</summary>
-						<p class="muted small">Add these lines to your Directus environment (for example <code>.env</code>) and restart Directus:</p>
-						<pre class="env">{{ enableLines }}</pre>
-						<p class="muted small">Directus then deletes older history automatically every night.</p>
-					</details>
-				</section>
+				<p v-if="error" class="banner failure">{{ error }}</p>
+				<p v-if="result" class="banner success">
+					<v-icon name="check_circle" small />
+					{{ result }}
+				</p>
 
-				<v-notice v-if="result" type="success" class="notice">{{ result }}</v-notice>
+				<v-info v-if="!collections.length" class="empty" icon="cleaning_services" title="Nothing to clean up" center>
+					No history has been recorded yet.
+				</v-info>
 
-				<section class="panel">
-					<h2 class="type-title">History by collection</h2>
-					<table v-if="collections.length" class="table">
+				<div v-else class="table-wrap">
+					<table>
 						<thead>
 							<tr>
 								<th>Collection</th>
@@ -79,9 +89,9 @@
 						</thead>
 						<tbody>
 							<tr v-for="item in collections" :key="item.collection">
-								<td>
+								<td class="name">
 									{{ nameOf(item.collection) }}
-									<span v-if="!item.exists" class="chip">deleted collection</span>
+									<span v-if="!item.exists" class="pill off">Deleted collection</span>
 								</td>
 								<td class="num" :title="`${formatCount(item.activity)} activity · ${formatCount(item.revisions)} revisions`">
 									{{ formatCount(historyRecords(item)) }}
@@ -93,33 +103,40 @@
 							</tr>
 						</tbody>
 					</table>
-					<p v-else class="empty">No history recorded yet. Nothing to clean up.</p>
-				</section>
+				</div>
+			</template>
+		</div>
 
-				<details class="panel settings">
-					<summary class="type-title">Retention settings</summary>
-					<p class="muted small meta">Built-in cleanup settings, read from the server environment.</p>
-					<table class="table">
-						<thead>
-							<tr><th>Variable</th><th>Value</th><th>Effect</th></tr>
-						</thead>
+		<v-dialog v-model="settingsOpen" @esc="settingsOpen = false">
+			<v-card v-if="overview">
+				<v-card-title>Retention settings</v-card-title>
+				<v-card-text>
+					<template v-if="!status.on">
+						<p>Add these lines to your Directus environment (for example <code>.env</code>) and restart Directus. It then deletes older history automatically every night.</p>
+						<pre class="env">{{ enableLines }}</pre>
+					</template>
+					<p v-else class="muted">Read from the server environment. Change them there.</p>
+					<table class="settings-table">
 						<tbody>
 							<tr v-for="row in retentionRows" :key="row.key">
 								<td class="mono">{{ row.key }}</td>
 								<td class="mono">
 									{{ row.value }}
-									<span v-if="row.isDefault" class="muted small">(default)</span>
+									<span v-if="row.isDefault" class="muted">(default)</span>
 								</td>
 								<td class="muted">{{ row.effect }}</td>
 							</tr>
 						</tbody>
 					</table>
-					<ul v-if="retention.notes.length" class="notes muted small">
+					<ul v-if="retention.notes.length" class="notes muted">
 						<li v-for="note in retention.notes" :key="note">{{ note }}</li>
 					</ul>
-				</details>
-			</template>
-		</div>
+				</v-card-text>
+				<v-card-actions>
+					<v-button @click="settingsOpen = false">Close</v-button>
+				</v-card-actions>
+			</v-card>
+		</v-dialog>
 
 		<v-dialog v-model="dialogOpen" :persistent="purging" @esc="!purging && (dialogOpen = false)">
 			<v-card>
@@ -168,6 +185,7 @@ const loading = ref(false);
 const error = ref(null);
 const result = ref(null);
 
+const settingsOpen = ref(false);
 const dialogOpen = ref(false);
 const target = ref(null);
 const age = ref('90d');
@@ -302,102 +320,166 @@ function exportReport(format) {
 	URL.revokeObjectURL(url);
 }
 </script>
-
 <style scoped>
 .cleanup-manager {
-	padding: var(--content-padding);
-	padding-bottom: var(--content-padding-bottom);
-	max-width: 1000px;
+	display: flex;
+	flex-direction: column;
+	height: calc(100vh - 64px);
+	min-height: 420px;
+}
+
+.padded {
+	margin: var(--content-padding);
+}
+
+.empty {
+	flex: 1;
+}
+
+.header-icon {
+	margin-right: 8px;
+}
+
+.nav-activity {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 12px 20px;
+}
+
+.field-label {
+	color: var(--theme--foreground-subdued);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.hint {
+	margin: 0;
+	color: var(--theme--foreground-subdued);
+	font-size: 13px;
+}
+
+.nav-button {
+	margin-top: 8px;
 }
 
 .state {
 	display: flex;
-	flex-direction: column;
 	align-items: center;
-	gap: 16px;
-	padding: 80px 0;
+	gap: 12px;
+	color: var(--theme--foreground-subdued);
 }
 
-.notice {
-	margin-bottom: 16px;
-}
-
-.panel {
-	background: var(--theme--background-subdued);
-	border: var(--theme--border-width) solid var(--theme--border-color-subdued);
-	border-radius: var(--theme--border-radius);
-	padding: 20px;
-	margin-bottom: 20px;
-}
-
-.status-line {
+.run-bar {
 	display: flex;
 	align-items: center;
-	gap: 10px;
-	font-size: 16px;
+	min-height: 64px;
+	padding: 12px var(--content-padding);
+	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
 }
 
-.tip {
+.run-title {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+.pill {
+	display: inline-block;
+	padding: 0 8px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 18px;
+	background: color-mix(in srgb, var(--pill, var(--theme--foreground-subdued)) 16%, transparent);
+	color: var(--pill, var(--theme--foreground-subdued));
+}
+
+.pill.on {
+	--pill: var(--theme--success);
+}
+
+.pill.off {
+	--pill: var(--theme--warning);
+}
+
+.banner {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	margin-top: 8px;
-}
-
-.how-to {
-	margin-top: 12px;
-}
-
-.how-to summary,
-.settings summary {
-	cursor: pointer;
-	color: var(--theme--primary);
-}
-
-.settings summary {
-	color: var(--theme--foreground);
-}
-
-.how-to p {
-	margin: 8px 0;
-}
-
-.env {
 	margin: 0;
-	padding: 8px 12px;
-	border-radius: var(--theme--border-radius);
-	background: var(--theme--background-normal);
-	font-family: var(--theme--fonts--monospace--font-family), monospace;
-	white-space: pre-wrap;
+	padding: 10px var(--content-padding);
+	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
+	font-size: 14px;
 }
 
-.type-title {
-	margin-bottom: 12px;
+.banner.success {
+	background: color-mix(in srgb, var(--theme--success) 10%, transparent);
+	color: var(--theme--success);
 }
 
-.settings .meta {
-	margin: 12px 0;
+.banner.failure {
+	background: color-mix(in srgb, var(--theme--danger) 10%, transparent);
+	color: var(--theme--danger);
 }
 
-.table {
+.table-wrap {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+}
+
+table {
 	width: 100%;
 	border-collapse: collapse;
 }
 
-.table th,
-.table td {
+th,
+td {
+	padding: 12px 16px;
 	text-align: left;
-	padding: 8px;
-	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
 	vertical-align: middle;
+	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
 }
 
-.table th {
+th:first-child,
+td:first-child {
+	padding-left: var(--content-padding);
+}
+
+th:last-child,
+td:last-child {
+	padding-right: var(--content-padding);
+}
+
+th {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	background: var(--theme--background);
 	color: var(--theme--foreground-subdued);
+	font-size: 12px;
 	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
 }
 
-.table .num {
+tbody tr:hover {
+	background: var(--theme--background-subdued);
+}
+
+.name {
+	font-weight: 500;
+}
+
+.name .pill {
+	margin-left: 8px;
+}
+
+.num {
 	text-align: right;
 	white-space: nowrap;
 }
@@ -406,35 +488,39 @@ function exportReport(format) {
 	text-align: right;
 }
 
-.chip {
-	margin-left: 6px;
-	padding: 1px 8px;
-	border-radius: 999px;
-	font-size: 12px;
-	color: var(--theme--warning);
-	background: var(--theme--background-normal);
+.env {
+	margin: 12px 0;
+	padding: 8px 12px;
+	border-radius: var(--theme--border-radius);
+	background: var(--theme--background-subdued);
+	font-family: var(--theme--fonts--monospace--font-family), monospace;
+	white-space: pre-wrap;
 }
 
-.empty {
-	padding: 24px 0;
-	text-align: center;
-	color: var(--theme--foreground-subdued);
+.settings-table {
+	width: 100%;
+	margin-top: 12px;
+	border-collapse: collapse;
+}
+
+.settings-table td {
+	padding: 6px 8px 6px 0;
+	border-bottom: none;
+	font-size: 13px;
 }
 
 .notes {
 	margin: 12px 0 0;
 	padding-left: 20px;
+	font-size: 13px;
 }
 
 .dialog-line {
 	margin: 16px 0 8px;
 }
 
-.success-text { color: var(--theme--success); }
-.warning-text { color: var(--theme--warning); }
 .danger-text { color: var(--theme--danger); }
 .muted { color: var(--theme--foreground-subdued); }
 .small { font-size: 13px; }
 .mono { font-family: var(--theme--fonts--monospace--font-family), monospace; }
-.header-icon { margin-right: 8px; }
 </style>
