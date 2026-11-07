@@ -14,11 +14,12 @@ See how your Directus collections and items are connected, check what deleting a
 
 Once installed, enable the module in your Project Settings and open **Content Dependency Graph** from the module bar.
 
-1. Pick a collection on the left (the most connected one opens automatically) to see what it uses and what uses it.
-2. Click **Check an item**, pick an item, and see what deleting it would do.
-3. Use **Health check** in the header for a list of problems, or **Show full map** for the whole picture.
+1. Pick a collection in the sidebar (the most connected one opens automatically) to see what it uses and what uses it.
+2. Click **Check an item** in the top bar, pick an item, and see what deleting it would do.
+3. Switch between **Links**, **Map** (every collection, with pan and zoom) and **Health** (a list of problems) at the top of the sidebar.
+4. Use the icons in the header to refresh or to export the map.
 
-System collections are hidden unless you tick **Show system collections**.
+System collections are hidden unless you tick **Show system collections** in the sidebar.
 
 ## Requirements
 

@@ -212,27 +212,19 @@ onMounted(() => scan(targets.value.slice(0, AUTO_LIMIT)));
 .health-check {
 	display: flex;
 	flex-direction: column;
-	gap: 20px;
 }
 
 .numbers {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-	gap: 12px;
-}
-
-.number,
-.panel {
-	background: var(--theme--background-subdued);
-	border: var(--theme--border-width) solid var(--theme--border-color-subdued);
-	border-radius: var(--theme--border-radius);
+	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
 }
 
 .number {
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
-	padding: 12px 16px;
+	padding: 16px var(--content-padding);
 }
 
 .number strong { font-size: 24px; }
@@ -243,7 +235,8 @@ onMounted(() => scan(targets.value.slice(0, AUTO_LIMIT)));
 	flex-direction: column;
 	align-items: flex-start;
 	gap: 8px;
-	padding: 20px;
+	padding: 20px var(--content-padding);
+	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
 }
 
 header {

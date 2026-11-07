@@ -6,8 +6,21 @@
 			</v-button>
 		</template>
 
-		<template #navigation>
-			<div class="nav">
+		<template v-if="isAdmin" #navigation>
+			<div class="nav-activity">
+				<div class="seg" role="group" aria-label="What to show">
+					<button
+						v-for="option in VIEWS"
+						:key="option.id"
+						type="button"
+						:class="{ active: view === option.id }"
+						@click="setView(option.id)"
+					>
+						{{ option.label }}
+					</button>
+				</div>
+
+				<label class="field-label">Collection</label>
 				<v-input v-model="navSearch" small placeholder="Find a collection">
 					<template #prepend><v-icon name="search" small /></template>
 				</v-input>
@@ -27,24 +40,21 @@
 						<span v-tooltip="`${degree.get(node.id) ?? 0} link(s)`" class="nav-count">{{ degree.get(node.id) ?? 0 }}</span>
 					</v-list-item>
 				</v-list>
-				<p v-if="graph && navCollections.length === 0" class="muted small nav-empty">No collections match.</p>
+				<p v-if="graph && navCollections.length === 0" class="hint">No collections match.</p>
 
-				<v-checkbox v-model="includeSystem" class="nav-system" label="Show system collections" />
+				<v-checkbox v-model="includeSystem" label="Show system collections" />
 			</div>
 		</template>
 
 		<template #actions>
-			<template v-if="graph">
-				<v-button small :secondary="view !== 'map'" @click="toggleView('map')">
-					<v-icon :name="view === 'map' ? 'list' : 'hub'" left small /> {{ view === 'map' ? 'Back to details' : 'Show full map' }}
+			<template v-if="isAdmin">
+				<v-button v-tooltip.bottom="'Refresh'" rounded icon secondary :loading="loading" @click="loadGraph">
+					<v-icon name="refresh" />
 				</v-button>
-				<v-button small :secondary="view !== 'health'" @click="toggleView('health')">
-					<v-icon name="health_and_safety" left small /> Health check
-				</v-button>
-				<v-menu show-arrow placement="bottom-end">
+				<v-menu v-if="graph" show-arrow placement="bottom-end">
 					<template #activator="{ toggle }">
-						<v-button small secondary @click="toggle">
-							<v-icon name="download" left small /> Export
+						<v-button v-tooltip.bottom="'Export'" rounded icon secondary @click="toggle">
+							<v-icon name="download" />
 						</v-button>
 					</template>
 					<v-list>
@@ -55,104 +65,115 @@
 					</v-list>
 				</v-menu>
 			</template>
-			<v-button v-tooltip.bottom="'Reload'" rounded icon secondary :loading="loading" @click="loadGraph">
-				<v-icon name="refresh" />
-			</v-button>
 		</template>
 
 		<div class="dependency-graph">
-			<v-notice v-if="!isAdmin" type="danger">Only administrators can use Content Dependency Graph.</v-notice>
+			<v-notice v-if="!isAdmin" type="danger" class="padded">Only administrators can use Content Dependency Graph.</v-notice>
 
 			<template v-else>
-				<div v-if="error" class="state">
+				<div v-if="error" class="padded state">
 					<p class="danger"><v-icon name="error" /> Couldn't load your collections: {{ error }}</p>
 					<v-button small secondary @click="loadGraph">Try again</v-button>
 				</div>
 
-				<v-skeleton-loader v-else-if="loading && !graph" type="block-list-item-dense" />
+				<v-skeleton-loader v-else-if="loading && !graph" type="block-list-item-dense" class="padded" />
 
 				<template v-else-if="graph">
-					<health-check
-						v-if="healthOpened"
-						v-show="view === 'health'"
-						:key="graph.generatedAt"
-						:graph="graph"
-						@select="openCollection"
-						@check="openCheck"
-					/>
+					<v-info
+						v-if="!selectedNode && view !== 'health'"
+						class="empty"
+						icon="account_tree"
+						title="No collections yet"
+						center
+					>
+						Create a collection in Settings → Data Model and its links will show up here.
+					</v-info>
 
-					<section v-if="view === 'map'" class="map">
-						<p class="muted small">
-							Arrows point from a collection to the one it uses. Drag to move, scroll to zoom, click a collection to highlight its links.
-						</p>
-						<div class="panel canvas-panel full">
-							<graph-canvas :layout="fullLayout" :selected="selected" @select="highlight" />
-						</div>
-					</section>
+					<template v-else>
+						<header class="run-bar">
+							<div class="run-title">
+								<template v-if="view === 'health'">
+									<strong>Health check</strong>
+									<span class="muted">Unused or broken content, circular links and collections that stand alone.</span>
+								</template>
+								<template v-else-if="view === 'map'">
+									<strong>All collections</strong>
+									<span class="pill">{{ fullGraph.nodes.length }} collections</span>
+									<span class="muted">Arrows point to the collection that is used.</span>
+								</template>
+								<template v-else>
+									<strong>{{ collectionName(selected) }}</strong>
+									<span class="pill">uses {{ connections.uses.length }}</span>
+									<span class="pill">used by {{ connections.usedBy.length }}</span>
+									<span v-if="selectedNode.note" class="muted">{{ selectedNode.note }}</span>
+								</template>
+							</div>
+							<div v-if="view === 'connections'" class="run-actions">
+								<router-link v-if="contentLink" :to="contentLink" class="link small">Open items</router-link>
+								<v-button small secondary :disabled="selected === 'directus_sessions'" @click="pickerOpen = true">
+									<v-icon name="delete_sweep" left small /> Check an item
+								</v-button>
+							</div>
+						</header>
 
-					<template v-if="view === 'connections'">
-						<p v-if="!selectedNode" class="state muted">
-							You don't have any collections yet. Create one in Settings → Data Model.
-						</p>
-
-						<template v-else>
-							<header class="title-row">
-								<div>
-									<h2 class="title">{{ collectionName(selected) }}</h2>
-									<p v-if="selectedNode.note" class="muted small">{{ selectedNode.note }}</p>
-								</div>
-								<div class="title-actions">
-									<router-link v-if="contentLink" :to="contentLink" class="link small">Open items</router-link>
-									<v-button small :disabled="selected === 'directus_sessions'" @click="pickerOpen = true">
-										<v-icon name="delete_sweep" left small /> Check an item
-									</v-button>
-								</div>
-							</header>
-
-							<impact-report
-								v-if="checkItem"
-								:collection="checkItem.collection"
-								:pk="checkItem.pk"
-								@close="checkItem = null"
+						<div class="body">
+							<health-check
+								v-if="healthOpened"
+								v-show="view === 'health'"
+								:key="graph.generatedAt"
+								:graph="graph"
+								@select="openCollection"
 								@check="openCheck"
 							/>
 
-							<div class="columns">
-								<section class="panel">
-									<h3 class="type-label">{{ collectionName(selected) }} uses</h3>
-									<p v-if="connections.uses.length === 0" class="muted small">Nothing — it doesn't link to other collections.</p>
-									<ul class="links">
-										<li v-for="entry in connections.uses" :key="entry.key" v-tooltip="entry.technical.join('\n')">
-											<v-icon :name="entry.amount === 'many' ? 'format_list_bulleted' : 'arrow_outward'" small />
-											<strong>{{ fieldName(entry.owner, entry.field) }}</strong>
-											<span class="muted">{{ entry.amount }} from</span>
-											<template v-for="(target, index) in entry.targets" :key="target">
-												<button class="link" @click="select(target)">{{ collectionName(target) }}</button>
-												<span v-if="index < entry.targets.length - 1" class="muted">or</span>
-											</template>
-										</li>
-									</ul>
-								</section>
+							<graph-canvas v-if="view === 'map'" class="fill" :layout="fullLayout" :selected="selected" @select="highlight" />
 
-								<section class="panel">
-									<h3 class="type-label">{{ collectionName(selected) }} is used by</h3>
-									<p v-if="connections.usedBy.length === 0" class="muted small">Nothing links to it yet.</p>
-									<ul class="links">
-										<li v-for="entry in connections.usedBy" :key="entry.key" v-tooltip="entry.technical.join('\n')">
-											<v-icon name="arrow_back" small />
-											<button class="link" @click="select(entry.collection)">{{ collectionName(entry.collection) }}</button>
-											<template v-if="entry.field">
-												<span class="muted">→</span> {{ fieldName(entry.collection, entry.field) }}
-											</template>
-										</li>
-									</ul>
-								</section>
-							</div>
+							<template v-if="view === 'connections'">
+								<impact-report
+									v-if="checkItem"
+									:collection="checkItem.collection"
+									:pk="checkItem.pk"
+									@close="checkItem = null"
+									@check="openCheck"
+								/>
 
-							<div v-if="neighbourGraph.nodes.length > 1" class="panel canvas-panel">
-								<graph-canvas :layout="neighbourLayout" :selected="selected" @select="select" />
-							</div>
-						</template>
+								<div class="columns">
+									<section class="section">
+										<h3 class="type-label">{{ collectionName(selected) }} uses</h3>
+										<p v-if="connections.uses.length === 0" class="muted small">Nothing. It doesn't link to other collections.</p>
+										<ul class="links">
+											<li v-for="entry in connections.uses" :key="entry.key" v-tooltip="entry.technical.join('\n')">
+												<v-icon :name="entry.amount === 'many' ? 'format_list_bulleted' : 'arrow_outward'" small />
+												<strong>{{ fieldName(entry.owner, entry.field) }}</strong>
+												<span class="muted">{{ entry.amount }} from</span>
+												<template v-for="(target, index) in entry.targets" :key="target">
+													<button class="link" @click="select(target)">{{ collectionName(target) }}</button>
+													<span v-if="index < entry.targets.length - 1" class="muted">or</span>
+												</template>
+											</li>
+										</ul>
+									</section>
+
+									<section class="section">
+										<h3 class="type-label">{{ collectionName(selected) }} is used by</h3>
+										<p v-if="connections.usedBy.length === 0" class="muted small">Nothing links to it yet.</p>
+										<ul class="links">
+											<li v-for="entry in connections.usedBy" :key="entry.key" v-tooltip="entry.technical.join('\n')">
+												<v-icon name="arrow_back" small />
+												<button class="link" @click="select(entry.collection)">{{ collectionName(entry.collection) }}</button>
+												<template v-if="entry.field">
+													<span class="muted">→</span> {{ fieldName(entry.collection, entry.field) }}
+												</template>
+											</li>
+										</ul>
+									</section>
+								</div>
+
+								<div v-if="neighbourGraph.nodes.length > 1" class="neighbours">
+									<graph-canvas :layout="neighbourLayout" :selected="selected" @select="select" />
+								</div>
+							</template>
+						</div>
 					</template>
 
 					<item-picker v-if="selectedNode" v-model="pickerOpen" :collection="selected" @pick="openCheck" />
@@ -175,6 +196,12 @@ import HealthCheck from './components/health-check.vue';
 import ImpactReport from './components/impact-report.vue';
 import ItemPicker from './components/item-picker.vue';
 import { useNames } from './use-names.js';
+
+const VIEWS = [
+	{ id: 'connections', label: 'Links' },
+	{ id: 'map', label: 'Map' },
+	{ id: 'health', label: 'Health' },
+];
 
 const EXPORTS = [
 	{ id: 'svg', label: 'Map as image (SVG)', icon: 'image' },
@@ -280,9 +307,9 @@ function highlight(id) {
 	if (id) selected.value = id;
 }
 
-function toggleView(target) {
-	view.value = view.value === target ? 'connections' : target;
-	if (view.value === 'health') healthOpened.value = true;
+function setView(target) {
+	view.value = target;
+	if (target === 'health') healthOpened.value = true;
 }
 
 function openCollection(id) {
@@ -317,22 +344,75 @@ function exportAs(format) {
 	URL.revokeObjectURL(url);
 }
 </script>
-
 <style scoped>
 .dependency-graph {
-	padding: var(--content-padding);
-	padding-bottom: var(--content-padding-bottom);
+	display: flex;
+	flex-direction: column;
+	height: calc(100vh - 64px);
+	min-height: 420px;
 }
 
-.nav {
+.padded {
+	margin: var(--content-padding);
+}
+
+.empty {
+	flex: 1;
+}
+
+.header-icon {
+	margin-right: 8px;
+}
+
+.nav-activity {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	min-height: 100%;
-	padding: 12px;
+	padding: 12px 12px 20px;
 }
 
-.nav-list { flex: 1; }
+.seg {
+	display: flex;
+	border: var(--theme--border-width) solid var(--theme--border-color);
+	border-radius: var(--theme--border-radius);
+	overflow: hidden;
+}
+
+.seg button {
+	flex: 1;
+	padding: 5px 10px;
+	border: none;
+	background: transparent;
+	color: var(--theme--foreground-subdued);
+	font: inherit;
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.seg button + button {
+	border-left: var(--theme--border-width) solid var(--theme--border-color);
+}
+
+.seg button.active {
+	background: color-mix(in srgb, var(--theme--primary) 16%, transparent);
+	color: var(--theme--primary);
+	font-weight: 600;
+}
+
+.field-label {
+	margin-top: 8px;
+	color: var(--theme--foreground-subdued);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.hint {
+	margin: 0;
+	color: var(--theme--foreground-subdued);
+	font-size: 12px;
+}
 
 .nav-name {
 	overflow: hidden;
@@ -346,15 +426,52 @@ function exportAs(format) {
 	color: var(--theme--foreground-subdued);
 }
 
-.nav-empty { margin: 0 8px; }
-.nav-system { margin-top: 8px; }
+.run-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	min-height: 64px;
+	padding: 12px var(--content-padding);
+	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
+}
 
-.panel {
-	background: var(--theme--background-subdued);
-	border: var(--theme--border-width) solid var(--theme--border-color-subdued);
-	border-radius: var(--theme--border-radius);
-	padding: 20px;
-	margin-bottom: 20px;
+.run-title {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+
+.run-actions {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	margin-left: auto;
+}
+
+.pill {
+	padding: 0 8px;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--theme--primary) 16%, transparent);
+	color: var(--theme--primary);
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 18px;
+}
+
+.body {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+	overflow: auto;
+}
+
+.fill {
+	flex: 1;
+	min-height: 0;
 }
 
 .state {
@@ -364,38 +481,26 @@ function exportAs(format) {
 	gap: 12px;
 }
 
-.state p { display: flex; align-items: center; gap: 8px; margin: 0; }
-
-.title-row {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: space-between;
-	align-items: flex-start;
-	gap: 12px;
-	margin-bottom: 20px;
-}
-
-.title {
-	margin: 0;
-	font-size: 22px;
-	font-weight: 700;
-}
-
-.title-row p { margin: 4px 0 0; }
-
-.title-actions {
+.state p {
 	display: flex;
 	align-items: center;
-	gap: 16px;
+	gap: 8px;
+	margin: 0;
 }
 
 .columns {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-	gap: 0 20px;
 }
 
-h3 { margin: 0 0 12px; }
+.section {
+	padding: 20px var(--content-padding);
+	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
+}
+
+h3 {
+	margin: 0 0 12px;
+}
 
 .links {
 	display: flex;
@@ -413,17 +518,14 @@ h3 { margin: 0 0 12px; }
 	gap: 6px;
 }
 
-.links .v-icon { color: var(--theme--foreground-subdued); }
-
-.canvas-panel {
-	height: 360px;
-	padding: 0;
-	overflow: hidden;
+.links .v-icon {
+	color: var(--theme--foreground-subdued);
 }
 
-.canvas-panel.full { height: calc(100vh - 240px); min-height: 420px; }
-
-.map p { margin: 0 0 12px; }
+.neighbours {
+	flex: 1;
+	min-height: 360px;
+}
 
 .link {
 	padding: 0;
@@ -434,8 +536,15 @@ h3 { margin: 0 0 12px; }
 	font: inherit;
 }
 
-.danger { color: var(--theme--danger); }
-.muted { color: var(--theme--foreground-subdued); }
-.small { font-size: 13px; }
-.header-icon { margin-right: 8px; }
+.danger {
+	color: var(--theme--danger);
+}
+
+.muted {
+	color: var(--theme--foreground-subdued);
+}
+
+.small {
+	font-size: 13px;
+}
 </style>

@@ -1,5 +1,5 @@
 ---
-"@11vertex/directus-extension-content-dependency-graph": patch
+"@11vertex/directus-extension-content-dependency-graph": minor
 ---
 
-Built with the current Directus extensions SDK and tested on Directus 12.6. The package is now much smaller to install.
+New layout: switch between Links, Map and Health in the sidebar, and the map fills the page. Built with the current Directus extensions SDK and tested on Directus 12.6.

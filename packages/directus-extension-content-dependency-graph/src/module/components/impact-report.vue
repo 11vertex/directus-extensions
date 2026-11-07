@@ -133,11 +133,9 @@ watch(() => [props.collection, props.pk], load, { immediate: true });
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
-	padding: 20px;
-	margin-bottom: 20px;
-	background: var(--theme--background-subdued);
-	border: var(--theme--border-width) solid var(--theme--border-color-subdued);
-	border-radius: var(--theme--border-radius);
+	padding: 20px var(--content-padding);
+	background: color-mix(in srgb, var(--theme--primary) 6%, transparent);
+	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
 }
 
 header {
