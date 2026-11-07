@@ -14,10 +14,10 @@ See what any role or user can do in Directus without logging in as them. One tab
 
 Once installed, enable the module in your Project Settings and open **Permission Simulator** from the module bar.
 
-1. The first non-admin role is selected automatically. Use **View access as** to switch to another role or a user.
-2. System collections are hidden; tick **Show system collections** to include them.
+1. The first non-admin role is selected automatically. Use **View access as** in the sidebar to switch to another role or a user.
+2. Collections are listed first and system collections under their own heading.
 3. Click a row to see the details. Raw filters are under **Technical details**.
-4. Use **Compare with…** in the header to compare with a second role, and **Export** to download the result.
+4. Use **Compare with** in the sidebar to compare with a second role, and **Export** in the header to download the result.
 
 _Simulating a role has no logged-in user, so rules that use `$CURRENT_USER` are marked "Depends on who is logged in". Pick a user to see the real result._
 

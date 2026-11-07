@@ -1,5 +1,5 @@
 ---
-"@11vertex/directus-extension-permission-simulator": patch
+"@11vertex/directus-extension-permission-simulator": minor
 ---
 
-Built with the current Directus extensions SDK and tested on Directus 12.6. The package is now much smaller to install.
+New layout: pick who to check and who to compare with in the sidebar, with collections and system collections in one full-width table. Built with the current Directus extensions SDK and tested on Directus 12.6.

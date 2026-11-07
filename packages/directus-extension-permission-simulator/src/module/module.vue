@@ -8,41 +8,10 @@
 
 		<template #actions>
 			<template v-if="isAdmin && result">
-				<v-button v-if="compareResult" secondary small @click="exitCompare">
-					<v-icon name="close" left small />
-					Exit compare
-				</v-button>
-				<v-menu v-else-if="selectedMode === 'role'" show-arrow placement="bottom-end">
-					<template #activator="{ toggle }">
-						<v-button secondary small :loading="comparing" @click="toggle">
-							<v-icon name="compare_arrows" left small />
-							Compare with…
-						</v-button>
-					</template>
-					<v-list>
-						<v-list-item
-							v-for="role in compareCandidates"
-							:key="role.id"
-							clickable
-							@click="startCompare(role.id)"
-						>
-							<v-list-item-content>{{ role.name }}</v-list-item-content>
-						</v-list-item>
-						<v-list-item v-if="!compareCandidates.length" disabled>
-							<v-list-item-content>No other roles to compare with</v-list-item-content>
-						</v-list-item>
-					</v-list>
-				</v-menu>
-				<v-button v-else v-tooltip.bottom="'Pick a role to compare'" secondary small disabled>
-					<v-icon name="compare_arrows" left small />
-					Compare with…
-				</v-button>
-
 				<v-menu show-arrow placement="bottom-end">
 					<template #activator="{ toggle }">
-						<v-button secondary small @click="toggle">
-							<v-icon name="download" left small />
-							Export
+						<v-button v-tooltip.bottom="'Export'" rounded icon secondary @click="toggle">
+							<v-icon name="download" />
 						</v-button>
 					</template>
 					<v-list>
@@ -57,53 +26,85 @@
 			</template>
 		</template>
 
-		<div class="permission-simulator">
-			<v-notice v-if="!isAdmin" type="danger">Only administrators can use Permission Simulator.</v-notice>
+		<template v-if="isAdmin" #navigation>
+			<div class="nav-activity">
+				<label class="field-label">View access as</label>
+				<v-select
+					v-model="selection"
+					:items="principalItems"
+					:disabled="!principalItems.length"
+					placeholder="Pick a role or user"
+				/>
 
-			<template v-else>
-				<div class="picker">
-					<span class="type-label">View access as</span>
+				<template v-if="result">
+					<label class="field-label">Compare with</label>
 					<v-select
-						v-model="selection"
-						class="picker-select"
-						:items="principalItems"
-						:disabled="!principalItems.length"
-						placeholder="Pick a role or user"
+						v-model="compareWith"
+						:items="compareItems"
+						:disabled="selectedMode !== 'role' || comparing"
+						show-deselect
+						placeholder="Another role"
 					/>
-				</div>
+					<p v-if="selectedMode !== 'role'" class="hint">Comparing works with roles. Pick a role above.</p>
 
-				<p v-if="compareResult" class="status">
-					Comparing <strong>{{ leftName }}</strong> with <strong>{{ rightName }}</strong> ·
-					{{ diffCount }} {{ diffCount === 1 ? 'difference' : 'differences' }}
-				</p>
-				<p v-else-if="principalNote" class="status">{{ principalNote }}</p>
-
-				<v-notice v-if="error" type="danger" class="spaced">
-					Couldn't load permissions: {{ error }}
-					<v-button class="retry" x-small secondary @click="retry">Try again</v-button>
-				</v-notice>
-
-				<p v-else-if="metaLoaded && !principalItems.length" class="muted">
-					No roles or users yet — create a role in Settings → Roles first.
-				</p>
-
-				<div v-else-if="!result" class="state">
-					<v-progress-circular indeterminate />
-					<span>Loading permissions…</span>
-				</div>
-
-				<template v-else>
 					<div class="legend">
 						<span v-for="(info, level) in ACCESS" :key="level" class="legend-item">
 							<v-icon :name="info.icon" :class="level" small />
 							{{ info.label }}
 						</span>
-						<v-checkbox v-model="showSystem" class="system-toggle" label="Show system collections" />
 					</div>
+				</template>
+			</div>
+		</template>
 
-					<p v-if="compareResult && !rows.length" class="muted">
-						{{ leftName }} and {{ rightName }} have exactly the same access.
-					</p>
+		<div class="permission-simulator">
+			<v-notice v-if="!isAdmin" type="danger" class="padded">Only administrators can use Permission Simulator.</v-notice>
+
+			<template v-else>
+				<v-notice v-if="error" type="danger" class="padded">
+					Couldn't load permissions: {{ error }}
+					<v-button class="retry" x-small secondary @click="retry">Try again</v-button>
+				</v-notice>
+
+				<v-info v-else-if="metaLoaded && !principalItems.length" class="empty" icon="security" title="No roles or users" center>
+					Create a role in Settings → Roles first.
+				</v-info>
+
+				<v-info v-else-if="metaLoaded && !selection && !loading && !starting" class="empty" icon="security" title="Pick a role or user" center>
+					Choose who to check in the sidebar to see what they can do.
+				</v-info>
+
+				<div v-else-if="!result" class="state padded">
+					<v-progress-circular indeterminate />
+					<span>Loading permissions…</span>
+				</div>
+
+				<template v-else>
+					<header class="run-bar">
+						<div class="run-title">
+							<template v-if="compareResult">
+								<strong>{{ leftName }}</strong>
+								<span class="muted">compared with</span>
+								<strong>{{ rightName }}</strong>
+								<span class="pill changed">{{ diffCount }} {{ diffCount === 1 ? 'difference' : 'differences' }}</span>
+							</template>
+							<template v-else>
+								<strong>{{ result.principal.label }}</strong>
+								<span class="muted">{{ principalNote || 'Click a collection to see why.' }}</span>
+							</template>
+						</div>
+					</header>
+
+					<v-info
+						v-if="!rows.length"
+						class="empty"
+						icon="security"
+						:title="compareResult ? 'No differences' : 'No collections found'"
+						center
+					>
+						<template v-if="compareResult">{{ leftName }} and {{ rightName }} have exactly the same access.</template>
+						<template v-else>This project has no collections yet.</template>
+					</v-info>
 
 					<div v-else class="table-wrap" :class="{ busy: loading || comparing }">
 						<table>
@@ -113,9 +114,12 @@
 									<th v-for="action in ACTIONS" :key="action">{{ ACTION_LABELS[action] }}</th>
 								</tr>
 							</thead>
-							<tbody>
+							<tbody v-for="section in sections" :key="section.key">
+								<tr class="group">
+									<td :colspan="ACTIONS.length + 1">{{ section.label }}</td>
+								</tr>
 								<tr
-									v-for="row in rows"
+									v-for="row in section.rows"
 									:key="row.collection"
 									tabindex="0"
 									@click="openDrawer(row.collection)"
@@ -255,7 +259,6 @@ const selection = ref(null);
 const result = ref(null);
 const loading = ref(false);
 const error = ref(null);
-const showSystem = ref(false);
 let loadedKey = null;
 let requestId = 0;
 
@@ -286,6 +289,9 @@ const principalItems = computed(() => {
 });
 
 const compareCandidates = computed(() => roles.value.filter((role) => `role:${role.id}` !== selection.value));
+const compareItems = computed(() => compareCandidates.value.map((role) => ({ text: role.name, value: role.id })));
+const compareWith = ref(null);
+const starting = ref(true);
 
 const principalNote = computed(() => {
 	const accountability = result.value?.accountability;
@@ -298,6 +304,14 @@ const principalNote = computed(() => {
 const leftName = computed(() => compareResult.value?.left.principal.label ?? '');
 const rightName = computed(() => compareResult.value?.right.principal.label ?? '');
 const diffRows = computed(() => (compareResult.value ? groupDiffsByCollection(compareResult.value.accessDiffs) : null));
+const sections = computed(() => {
+	const own = rows.value.filter((row) => !row.collection.startsWith('directus_'));
+	const system = rows.value.filter((row) => row.collection.startsWith('directus_'));
+	return [
+		{ key: 'own', label: 'Collections', rows: own },
+		{ key: 'system', label: 'System collections', rows: system },
+	].filter((section) => section.rows.length);
+});
 const diffCount = computed(() => rows.value.reduce((total, row) => total + Object.keys(row.diffs ?? {}).length, 0));
 
 const rows = computed(() => {
@@ -307,7 +321,6 @@ const rows = computed(() => {
 	const names = new Set([...collections.value, ...Object.keys(access)]);
 
 	return [...names]
-		.filter((name) => showSystem.value || !name.startsWith('directus_'))
 		.filter((name) => !diffRows.value || diffRows.value.has(name))
 		.map((name) => ({
 			collection: name,
@@ -370,7 +383,13 @@ const itemLines = computed(() =>
 		})),
 );
 
+watch(compareWith, (roleId) => {
+	if (roleId) startCompare(roleId);
+	else exitCompare();
+});
+
 watch(selection, (key) => {
+	compareWith.value = null;
 	compareResult.value = null;
 	drawerOpen.value = false;
 	if (key && key !== loadedKey) loadSelection(key);
@@ -387,6 +406,7 @@ onMounted(async () => {
 	loadPolicyNames();
 	await loadMeta();
 	if (!error.value) await autoSelect();
+	starting.value = false;
 });
 
 async function loadMeta() {
@@ -485,6 +505,7 @@ async function startCompare(roleId) {
 }
 
 function exitCompare() {
+	compareWith.value = null;
 	compareResult.value = null;
 }
 
@@ -588,33 +609,112 @@ function extractError(err) {
 
 <style scoped>
 .permission-simulator {
-	padding: var(--content-padding);
-	padding-bottom: var(--content-padding-bottom);
-	max-width: 1100px;
+	display: flex;
+	flex-direction: column;
+	height: calc(100vh - 64px);
+	min-height: 420px;
+}
+
+.padded {
+	margin: var(--content-padding);
+}
+
+.empty {
+	flex: 1;
 }
 
 .header-icon {
 	margin-right: 8px;
 }
 
-.picker {
+.nav-activity {
 	display: flex;
-	align-items: center;
-	gap: 12px;
-	margin-bottom: 8px;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 12px 20px;
 }
 
-.picker-select {
-	max-width: 420px;
+.field-label {
+	margin-top: 8px;
+	color: var(--theme--foreground-subdued);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
 }
 
-.status {
-	margin: 0 0 16px;
+.field-label:first-child {
+	margin-top: 0;
+}
+
+tr.group td {
+	padding: 8px var(--content-padding);
+	background: var(--theme--background-subdued);
+	color: var(--theme--foreground-subdued);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	text-align: left;
+	text-transform: uppercase;
+}
+
+tbody tr.group {
+	cursor: default;
+}
+
+tbody tr.group:hover {
+	background: none;
+}
+
+.hint {
+	margin: 0;
+	color: var(--theme--foreground-subdued);
+	font-size: 12px;
+}
+
+.legend {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: var(--theme--border-width) solid var(--theme--border-color-subdued);
+	font-size: 13px;
 	color: var(--theme--foreground-subdued);
 }
 
-.spaced {
-	margin: 16px 0;
+.legend-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.run-bar {
+	display: flex;
+	align-items: center;
+	min-height: 64px;
+	padding: 12px var(--content-padding);
+	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
+}
+
+.run-title {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+.pill {
+	padding: 0 8px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 18px;
+}
+
+.pill.changed {
+	background: color-mix(in srgb, var(--theme--warning) 16%, transparent);
+	color: var(--theme--warning);
 }
 
 .retry {
@@ -625,7 +725,6 @@ function extractError(err) {
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	margin: 24px 0;
 	color: var(--theme--foreground-subdued);
 }
 
@@ -637,31 +736,10 @@ function extractError(err) {
 	color: var(--theme--foreground-subdued);
 }
 
-.legend {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 8px 20px;
-	margin: 16px 0 12px;
-	font-size: 13px;
-	color: var(--theme--foreground-subdued);
-}
-
-.legend-item {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-}
-
-.system-toggle {
-	margin-left: auto;
-}
-
 .table-wrap {
-	overflow-x: auto;
-	background: var(--theme--background-subdued);
-	border: var(--theme--border-width) solid var(--theme--border-color-subdued);
-	border-radius: var(--theme--border-radius);
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
 	transition: opacity 0.2s;
 }
 
@@ -676,24 +754,27 @@ table {
 
 th,
 td {
-	padding: 10px 16px;
+	padding: 12px 16px;
 	text-align: center;
 	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
 }
 
 th:first-child,
 td:first-child {
+	padding-left: var(--content-padding);
 	text-align: left;
 }
 
 th {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	background: var(--theme--background);
 	font-size: 12px;
 	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
 	color: var(--theme--foreground-subdued);
-}
-
-tbody tr:last-child td {
-	border-bottom: none;
 }
 
 tbody tr {
@@ -702,14 +783,15 @@ tbody tr {
 
 tbody tr:hover,
 tbody tr:focus-visible {
-	background: var(--theme--background-normal);
+	background: var(--theme--background-subdued);
 	outline: none;
 }
 
 .collection {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 10px;
+	font-weight: 500;
 }
 
 td.changed {
