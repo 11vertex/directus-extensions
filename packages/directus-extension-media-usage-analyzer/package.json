@@ -1,6 +1,6 @@
 {
   "name": "@11vertex/directus-extension-media-usage-analyzer",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Directus media usage analyzer: find unused and duplicate files, broken file links and large images, see storage use, and safely delete what nobody uses",
   "icon": "perm_media",
   "license": "MIT",
