@@ -1,6 +1,6 @@
 {
   "name": "@11vertex/directus-extension-activity-cleanup-manager",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Directus activity and revisions cleanup: see how much history each collection keeps, check retention settings and safely clean up old activity and revisions",
   "icon": "cleaning_services",
   "license": "MIT",
