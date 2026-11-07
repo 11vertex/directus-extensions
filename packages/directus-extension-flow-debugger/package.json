@@ -1,6 +1,6 @@
 {
   "name": "@11vertex/directus-extension-flow-debugger",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Directus flow debugger: browse flow runs, see which step failed and why, inspect step inputs and outputs, and compare with the last successful run",
   "icon": "bug_report",
   "license": "MIT",
