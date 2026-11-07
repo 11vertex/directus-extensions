@@ -1,3 +1,4 @@
+import { buildGraph } from "./graph.js";
 import {
   compareExecutionDetails,
   normalizeExecutionDetail,
@@ -168,7 +169,9 @@ async function getExecution(activityId, context) {
 
   const flowMap = await loadFlowMap(context, schema);
   const operationsMap = await loadOperationsMap(activity.item, context, schema);
-  return normalizeExecutionDetail(activity, flowMap, operationsMap);
+  const detail = normalizeExecutionDetail(activity, flowMap, operationsMap);
+  detail.graph = await loadGraph(activity.item, operationsMap, activity.timestamp, context, schema);
+  return detail;
 }
 
 async function compareExecutions(request, context) {
@@ -192,6 +195,20 @@ async function compareExecutions(request, context) {
   }
 
   return compareExecutionDetails(baseline, comparison);
+}
+
+async function loadGraph(flowId, operationsMap, ranAt, context, schema) {
+  if (!flowId) return null;
+  const flowsService = new context.services.FlowsService({ schema, accountability: null, knex: context.database });
+  let flow = null;
+  try {
+    flow = await flowsService.readOne(flowId, {
+      fields: ["id", "name", "status", "trigger", "options", "operation"]
+    });
+  } catch {
+    return null;
+  }
+  return buildGraph(flow, [...operationsMap.values()], ranAt);
 }
 
 async function loadFlowMap(context, schema) {
@@ -227,7 +244,7 @@ async function loadOperationsMap(flowId, context, schema) {
   });
   const operations = await operationsService.readByQuery({
     filter: { flow: { _eq: flowId } },
-    fields: ["id", "name", "key", "type"],
+    fields: ["id", "name", "key", "type", "options", "position_x", "position_y", "resolve", "reject", "date_created"],
     limit: -1
   });
   return new Map(
@@ -237,7 +254,13 @@ async function loadOperationsMap(flowId, context, schema) {
         id: String(operation.id),
         name: typeof operation.name === "string" ? operation.name : null,
         key: typeof operation.key === "string" ? operation.key : null,
-        type: typeof operation.type === "string" ? operation.type : null
+        type: typeof operation.type === "string" ? operation.type : null,
+        options: operation.options ?? {},
+        position_x: operation.position_x,
+        position_y: operation.position_y,
+        resolve: operation.resolve ?? null,
+        reject: operation.reject ?? null,
+        dateCreated: operation.date_created ?? null
       }
     ])
   );

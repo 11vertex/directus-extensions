@@ -21,7 +21,8 @@ function formatExecutionsJson(listResult, detail = null) {
   );
 }
 
-function formatExecutionDetailJson(detail) {
+function formatExecutionDetailJson(fullDetail) {
+  const { graph: _graph, ...detail } = fullDetail;
   return JSON.stringify(
     {
       meta: buildReportMetadata("flow-execution-detail", "json"),

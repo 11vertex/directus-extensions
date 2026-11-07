@@ -52,6 +52,12 @@ describe("Flow Debugger", () => {
     const failedStep = detail.steps.find((step) => step.key === "bad_slack");
     assert.equal(failedStep.status, "reject");
     assert.match(JSON.stringify(failedStep.result), /webhook URL/i);
+
+    // The run can be drawn on the flow: every step that ran is a card, the failed one is among them.
+    const cards = new Map(detail.graph.panels.map((panel) => [panel.id, panel]));
+    assert.equal(cards.get("$trigger").kind, "trigger");
+    assert.ok(cards.has(failedStep.operationId), "the failed step is a card in the picture");
+    assert.ok(detail.graph.panels.every((panel) => Number.isFinite(panel.x) && Number.isFinite(panel.y)));
   });
 
   it("compares two runs of the same flow", async () => {
@@ -69,6 +75,16 @@ describe("Flow Debugger", () => {
       `/flow-debugger/compare?baselineId=${notify.items[0].id}&comparisonId=${broken.items[0].id}`
     );
     assert.equal(comparison.status, 400);
+  });
+
+  it("can remember the chosen flow per user in Directus' presets", async () => {
+    const me = await admin.ok("GET", "/users/me?fields=id");
+    const created = await admin.ok("POST", "/presets", { user: me.id, collection: "flow-debugger", layout_options: { flowId: state.flows.notify } });
+    await admin.ok("PATCH", `/presets/${created.id}`, { layout_options: { flowId: null } });
+    const found = await admin.ok("GET", `/presets?filter[user][_eq]=${me.id}&filter[collection][_eq]=flow-debugger&fields=id,layout_options&limit=1`);
+    assert.equal(found.length, 1);
+    assert.equal(found[0].layout_options.flowId, null);
+    await admin.ok("DELETE", `/presets/${created.id}`);
   });
 
   it("returns 404 for an activity that is not a flow run", async () => {

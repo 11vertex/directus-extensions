@@ -4,18 +4,19 @@ See every run of your Directus Flows, find out which step failed and why, and co
 
 ## Features
 
-- **Recent runs**: newest first, with worked / failed status, time and who or what started it
-- **Step timeline**: each step with its input and output
-- **Clear failures**: "Failed at step 'Send email': …" with that step opened automatically
-- **Compare with last successful run**: lists what changed in plain sentences
+- **Recent runs**: newest first in the sidebar, for the flow you pick, with worked / failed status, time and who or what started it
+- **The run on the flow**: your flow drawn like the flow editor, with the steps that ran marked as worked or failed and the steps that never ran greyed out
+- **Clear failures**: "Failed at 'Send email': …" with the failed step outlined in red
+- **Step details**: click any step to see what it received and what it returned
+- **Compare with last successful run**: lists what changed in plain sentences and outlines the steps that differ
 - **Export**: the selected run or the list as JSON or CSV
 
 ## Usage
 
 Once installed, enable the module in your Project Settings and open **Flow Debugger** from the module bar.
 
-1. The latest run is shown right away. Pick a flow or switch to **Failed only** to narrow the list.
-2. Click a run to see its steps, and **Show data** on a step to see its input and output.
+1. Pick a flow in the sidebar (the one you used last is remembered for you) and switch to **Failed** to narrow the list. The latest run opens right away.
+2. Click a run to see it drawn on the flow, and click a step to see its input and output.
 3. Click **Compare with last successful run** to see what was different.
 
 ## Configuration
@@ -37,6 +38,7 @@ The module and its API are available to administrators only. The debugger is rea
 
 ## Limitations
 
+- The picture uses the flow as it is today. Steps added after a run are left out, and steps removed after a run are not drawn; the page notes both. Positions and connections are today's.
 - Directus records a run only after it finishes, so there is no live view of running flows.
 - Directus does not store how long a run or step took.
 - Sensitive values are hidden by Directus before they are saved.
