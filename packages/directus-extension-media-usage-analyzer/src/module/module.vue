@@ -8,7 +8,6 @@
 
 		<template #actions>
 			<template v-if="isAdmin">
-				<v-checkbox v-model="scanContent" class="content-toggle" label="Also check links inside text fields (slower)" />
 				<v-menu v-if="report" show-arrow placement="bottom-end">
 					<template #activator="{ toggle }">
 						<v-button v-tooltip.bottom="'Export'" rounded icon secondary @click="toggle">
@@ -26,63 +25,99 @@
 						</v-list-item>
 					</v-list>
 				</v-menu>
-				<v-button v-tooltip.bottom="'Scan again'" rounded icon :loading="loading" @click="runScan">
+				<v-button v-tooltip.bottom="'Scan again'" rounded icon secondary :loading="loading" @click="runScan">
 					<v-icon name="refresh" />
 				</v-button>
 			</template>
 		</template>
 
-		<div class="media-usage-analyzer">
-			<v-notice v-if="!isAdmin" type="danger">Only administrators can use Media Usage Analyzer.</v-notice>
-
-			<div v-else-if="!report && loading" class="state">
-				<v-progress-circular indeterminate />
-				<p class="muted">Scanning your files… this can take a moment on large libraries.</p>
-			</div>
-
-			<v-notice v-else-if="!report && error" type="danger">Couldn't scan your files: {{ error }} Try "Scan again".</v-notice>
-
-			<template v-else-if="report">
-				<v-notice v-if="error" type="danger" class="notice">{{ error }}</v-notice>
-
-				<section class="cards">
+		<template v-if="isAdmin" #navigation>
+			<div class="nav-activity">
+				<label class="field-label">Reports</label>
+				<nav class="views">
+					<button
+						type="button"
+						class="view"
+						:class="{ active: active === 'overview' }"
+						:disabled="!report"
+						@click="active = 'overview'"
+					>
+						<v-icon name="dashboard" small />
+						<span class="view-label">Overview</span>
+					</button>
 					<button
 						v-for="card in cards"
 						:key="card.id"
 						type="button"
-						class="card"
-						:class="[card.tone, { active: active === card.id, focus: focus === card.id }]"
+						class="view"
+						:class="[card.tone, { active: active === card.id }]"
+						:disabled="!report"
 						@click="active = card.id"
 					>
-						<span class="card-label">
-							<v-icon :name="card.icon" small />
-							{{ card.label }}
-							<span v-if="focus === card.id" class="card-badge">Start here</span>
-						</span>
-						<span class="card-value">{{ card.value }}</span>
-						<span class="muted small">{{ card.detail }}</span>
+						<v-icon :name="card.icon" small />
+						<span class="view-label">{{ card.label }}</span>
+						<span v-if="report" class="pill" :class="card.tone">{{ card.pill }}</span>
+						<span v-if="report && focus === card.id" v-tooltip="'Most worth a look'" class="dot" />
 					</button>
-				</section>
+				</nav>
 
-				<p class="meta muted small">
-					Scanned {{ timeAgo(report.generatedAt) }}{{ report.summary.contentScanned ? ', including links inside text fields' : '' }}.
-					<span v-if="report.warnings.length" class="warning-text">Some fields couldn't be checked, so results may be incomplete.</span>
+				<label class="field-label">Scan</label>
+				<v-checkbox v-model="scanContent" label="Also check links inside text fields" />
+				<p class="hint">Slower. Applies the next time you scan again.</p>
+
+				<p v-if="report" class="hint">
+					Scanned {{ timeAgo(report.generatedAt) }}{{ report.summary.contentScanned ? ', including text fields' : '' }}.
 				</p>
-				<details v-if="report.warnings.length" class="technical">
-					<summary class="muted small">Technical details</summary>
-					<ul class="muted small">
-						<li v-for="warning in report.warnings" :key="warning">{{ warning }}</li>
-					</ul>
-				</details>
+				<p v-if="report?.warnings.length" class="hint warning-text" :title="report.warnings.join('\n')">
+					Some fields couldn't be checked, so results may be incomplete.
+				</p>
+			</div>
+		</template>
 
-				<section class="panel">
-					<h2 class="type-title">{{ activeCard.title }}</h2>
+		<div class="media-usage-analyzer">
+			<v-notice v-if="!isAdmin" type="danger" class="padded">Only administrators can use Media Usage Analyzer.</v-notice>
 
-					<template v-if="active === 'unused'">
-						<p class="hint muted small">
-							Not used in any file field{{ report.summary.contentScanned ? ' or text field' : '' }}. Each file is checked again right before it is deleted.
-						</p>
-						<v-notice v-if="deleteResult" :type="deleteResult.tone" class="notice">{{ deleteResult.text }}</v-notice>
+			<div v-else-if="!report && loading" class="state">
+				<v-progress-circular indeterminate />
+				<span>Scanning your files… this can take a moment on large libraries.</span>
+			</div>
+
+			<v-notice v-else-if="!report && error" type="danger" class="padded">Couldn't scan your files: {{ error }} Try "Scan again".</v-notice>
+
+			<template v-else-if="report">
+				<header class="run-bar">
+					<div class="run-title">
+						<strong>{{ activeCard.title }}</strong>
+						<span class="pill">{{ activeCard.value }}</span>
+						<span class="pill quiet">{{ activeCard.detail }}</span>
+					</div>
+					<p class="muted run-hint">{{ activeHint }}</p>
+				</header>
+
+				<v-notice v-if="error" type="danger" class="padded">{{ error }}</v-notice>
+
+				<div class="content">
+					<section v-if="active === 'overview'" class="cards">
+						<button
+							v-for="card in cards"
+							:key="card.id"
+							type="button"
+							class="card"
+							:class="[card.tone, { focus: focus === card.id }]"
+							@click="active = card.id"
+						>
+							<span class="card-label">
+								<v-icon :name="card.icon" small />
+								{{ card.label }}
+								<span v-if="focus === card.id" class="pill">Start here</span>
+							</span>
+							<span class="card-value">{{ card.value }}</span>
+							<span class="muted small">{{ card.detail }}</span>
+						</button>
+					</section>
+
+					<template v-else-if="active === 'unused'">
+						<v-notice v-if="deleteResult" :type="deleteResult.tone" class="padded">{{ deleteResult.text }}</v-notice>
 						<template v-if="report.unusedFiles.length">
 							<div class="toolbar">
 								<v-checkbox
@@ -102,26 +137,27 @@
 								Showing the {{ formatNumber(report.unusedFiles.length) }} largest. Delete some and scan again to see the rest.
 							</p>
 						</template>
-						<p v-else class="empty">Every file is in use. Nothing to clean up.</p>
+						<v-info v-else class="empty" icon="check_circle" title="Every file is in use" center>
+							Nothing to clean up.
+						</v-info>
 					</template>
 
 					<template v-else-if="active === 'duplicates'">
-						<p class="hint muted small">
-							{{ report.duplicates.heuristic === 'checksum' ? 'Files with identical content.' : 'Files with the same name, size and type.' }}
-							Point your items at one copy; the other copies then show up as unused.
-						</p>
-						<article v-for="group in report.duplicates.groups" :key="group.key" class="group">
-							<h3 class="group-title">
-								{{ group.filename }}
-								<span class="muted small">{{ group.count }} copies · {{ formatBytes(group.wastedBytes) }} could be freed</span>
-							</h3>
-							<file-list :files="group.files" :detail="usedLabel" />
-						</article>
-						<p v-if="report.duplicates.groups.length === 0" class="empty">No duplicate uploads found.</p>
+						<template v-if="report.duplicates.groups.length">
+							<article v-for="group in report.duplicates.groups" :key="group.key" class="group">
+								<h3 class="group-title">
+									{{ group.filename }}
+									<span class="muted small">{{ group.count }} copies · {{ formatBytes(group.wastedBytes) }} could be freed</span>
+								</h3>
+								<file-list :files="group.files" :detail="usedLabel" />
+							</article>
+						</template>
+						<v-info v-else class="empty" icon="content_copy" title="No duplicates" center>
+							No duplicate uploads found.
+						</v-info>
 					</template>
 
 					<template v-else-if="active === 'broken'">
-						<p class="hint muted small">These fields point to files that were deleted. Open the items and pick a new file or clear the field.</p>
 						<ul v-if="report.broken.length" class="rows">
 							<li v-for="entry in report.broken" :key="`${entry.source}:${entry.fileId}`" class="row" :title="`Missing file: ${entry.fileId}`">
 								<v-icon name="link_off" class="danger-text" />
@@ -136,32 +172,33 @@
 								</router-link>
 							</li>
 						</ul>
-						<p v-else class="empty">No broken links. Every file reference works.</p>
+						<v-info v-else class="empty" icon="link" title="No broken links" center>
+							Every file reference works.
+						</v-info>
 					</template>
 
 					<template v-else-if="active === 'large'">
-						<p class="hint muted small">Images wider or taller than 4000 px, or bigger than 10 MB. Smaller versions load faster.</p>
 						<file-list v-if="report.images.large.length" :files="report.images.large" :detail="imageDetail" />
-						<p v-else class="empty">No large images.</p>
+						<v-info v-else class="empty" icon="photo_size_select_large" title="No large images" center>
+							Nothing is over 4000 px or 10 MB.
+						</v-info>
 					</template>
 
 					<template v-else>
-						<p class="hint muted small">Your largest files.</p>
+						<ul v-if="kinds.length" class="bars">
+							<li v-for="row in kinds" :key="row.label" class="bar-row">
+								<span>{{ row.label }}</span>
+								<span class="bar-track"><span class="bar" :style="{ width: share(row.bytes) }" /></span>
+								<span class="muted small">{{ formatBytes(row.bytes) }} · {{ formatNumber(row.files) }} files</span>
+							</li>
+						</ul>
+						<h3 v-if="report.largestFiles.length" class="section-title">Largest files</h3>
 						<file-list v-if="report.largestFiles.length" :files="report.largestFiles" :detail="usedLabel" />
-						<p v-else class="empty">No files uploaded yet.</p>
+						<v-info v-else class="empty" icon="cloud" title="No files yet" center>
+							Uploaded files will show up here.
+						</v-info>
 					</template>
-				</section>
-
-				<section v-if="kinds.length" class="panel">
-					<h2 class="type-title">Storage by type</h2>
-					<ul class="bars">
-						<li v-for="row in kinds" :key="row.label" class="bar-row">
-							<span>{{ row.label }}</span>
-							<span class="bar-track"><span class="bar" :style="{ width: share(row.bytes) }" /></span>
-							<span class="muted small">{{ formatBytes(row.bytes) }} · {{ formatNumber(row.files) }} files</span>
-						</li>
-					</ul>
-				</section>
+				</div>
 			</template>
 		</div>
 
@@ -204,7 +241,7 @@ const report = ref(null);
 const loading = ref(false);
 const error = ref(null);
 const scanContent = ref(false);
-const active = ref('unused');
+const active = ref('overview');
 const selected = ref(new Set());
 const deleteOpen = ref(false);
 const deleting = ref(false);
@@ -218,15 +255,36 @@ const kinds = computed(() => storageByKind(report.value?.storage.byCategory));
 const cards = computed(() => {
 	const s = summary.value;
 	return [
-		{ id: 'storage', icon: 'cloud', label: 'Storage used', title: 'Largest files', value: formatBytes(s.totalBytes), detail: `in ${formatNumber(s.files)} files` },
-		{ id: 'unused', icon: 'delete_sweep', label: 'Unused files', title: 'Unused files', value: formatNumber(s.unusedFiles), detail: formatBytes(s.unusedBytes), tone: s.unusedFiles ? 'warning' : 'success' },
-		{ id: 'duplicates', icon: 'content_copy', label: 'Duplicates', title: 'Duplicate uploads', value: `${formatNumber(s.duplicateGroups)} ${s.duplicateGroups === 1 ? 'group' : 'groups'}`, detail: `${formatBytes(s.duplicateWastedBytes)} could be freed`, tone: s.duplicateGroups ? 'warning' : 'success' },
-		{ id: 'broken', icon: 'link_off', label: 'Broken links', title: 'Broken links', value: formatNumber(s.brokenReferences), detail: s.brokenReferences ? 'point to deleted files' : 'all links work', tone: s.brokenReferences ? 'danger' : 'success' },
-		{ id: 'large', icon: 'photo_size_select_large', label: 'Large images', title: 'Large images', value: formatNumber(s.largeImages), detail: s.largeImages ? formatBytes(s.largeImagesBytes) : 'none over 4000 px or 10 MB', tone: s.largeImages ? 'warning' : 'success' },
+		{ id: 'storage', icon: 'cloud', label: 'Storage', title: 'Storage used', value: formatBytes(s.totalBytes), pill: formatBytes(s.totalBytes), detail: `in ${formatNumber(s.files)} files` },
+		{ id: 'unused', icon: 'delete_sweep', label: 'Unused files', title: 'Unused files', value: formatNumber(s.unusedFiles), pill: formatNumber(s.unusedFiles), detail: formatBytes(s.unusedBytes), tone: s.unusedFiles ? 'warning' : 'success' },
+		{ id: 'duplicates', icon: 'content_copy', label: 'Duplicates', title: 'Duplicate uploads', value: `${formatNumber(s.duplicateGroups)} ${s.duplicateGroups === 1 ? 'group' : 'groups'}`, pill: formatNumber(s.duplicateGroups), detail: `${formatBytes(s.duplicateWastedBytes)} could be freed`, tone: s.duplicateGroups ? 'warning' : 'success' },
+		{ id: 'broken', icon: 'link_off', label: 'Broken links', title: 'Broken links', value: formatNumber(s.brokenReferences), pill: formatNumber(s.brokenReferences), detail: s.brokenReferences ? 'point to deleted files' : 'all links work', tone: s.brokenReferences ? 'danger' : 'success' },
+		{ id: 'large', icon: 'photo_size_select_large', label: 'Large images', title: 'Large images', value: formatNumber(s.largeImages), pill: formatNumber(s.largeImages), detail: s.largeImages ? formatBytes(s.largeImagesBytes) : 'none over 4000 px or 10 MB', tone: s.largeImages ? 'warning' : 'success' },
 	];
 });
 
-const activeCard = computed(() => cards.value.find((card) => card.id === active.value));
+const activeCard = computed(() =>
+	active.value === 'overview'
+		? { id: 'overview', title: 'Overview', value: `${formatNumber(summary.value.files)} ${summary.value.files === 1 ? 'file' : 'files'}`, detail: formatBytes(summary.value.totalBytes) }
+		: cards.value.find((card) => card.id === active.value),
+);
+const activeHint = computed(() => {
+	if (!report.value) return '';
+	switch (active.value) {
+		case 'overview':
+			return 'Pick a card to see the files behind it.';
+		case 'unused':
+			return `Not used in any file field${report.value.summary.contentScanned ? ' or text field' : ''}. Each file is checked again right before it is deleted.`;
+		case 'duplicates':
+			return `${report.value.duplicates.heuristic === 'checksum' ? 'Identical content.' : 'Same name, size and type.'} Point items at one copy; the others then show up as unused.`;
+		case 'broken':
+			return 'Fields that point to deleted files. Open the items and pick a new file or clear the field.';
+		case 'large':
+			return 'Wider or taller than 4000 px, or over 10 MB. Smaller versions load faster.';
+		default:
+			return 'Where your storage goes.';
+	}
+});
 
 const selectedBytes = computed(() =>
 	(report.value?.unusedFiles ?? []).filter((file) => selected.value.has(file.id)).reduce((total, file) => total + file.filesize, 0),
@@ -323,120 +381,160 @@ function exportReport(format) {
 	URL.revokeObjectURL(url);
 }
 </script>
-
 <style scoped>
 .media-usage-analyzer {
-	padding: var(--content-padding);
-	padding-bottom: var(--content-padding-bottom);
-	max-width: 1200px;
+	display: flex;
+	flex-direction: column;
+	height: calc(100vh - 64px);
+	min-height: 420px;
 }
 
-.content-toggle {
+.padded {
+	margin: var(--content-padding);
+}
+
+.empty {
+	flex: 1;
+}
+
+.header-icon {
 	margin-right: 8px;
+}
+
+.nav-activity {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 12px 20px;
+}
+
+.field-label {
+	margin-top: 8px;
+	color: var(--theme--foreground-subdued);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.field-label:first-child {
+	margin-top: 0;
+}
+
+.hint {
+	margin: 0;
+	color: var(--theme--foreground-subdued);
+	font-size: 12px;
+}
+
+.views {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.view {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 8px 10px;
+	border: none;
+	border-left: 3px solid transparent;
+	border-radius: var(--theme--border-radius);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.view:hover:not(:disabled) {
+	background: var(--theme--background-subdued);
+}
+
+.view.active {
+	border-left-color: var(--theme--primary);
+	background: color-mix(in srgb, var(--theme--primary) 12%, transparent);
+}
+
+.view:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.view-label {
+	flex: 1;
+}
+
+.dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--theme--primary);
+}
+
+.pill {
+	flex: none;
+	padding: 0 8px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 18px;
+	background: color-mix(in srgb, var(--pill, var(--theme--foreground-subdued)) 16%, transparent);
+	color: var(--pill, var(--theme--foreground-subdued));
+}
+
+.pill.warning {
+	--pill: var(--theme--warning);
+}
+
+.pill.danger {
+	--pill: var(--theme--danger);
+}
+
+.pill.success {
+	--pill: var(--theme--success);
+}
+
+.run-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
+	min-height: 64px;
+	padding: 12px var(--content-padding);
+	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
+}
+
+.run-title {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.run-hint {
+	margin: 0;
+	font-size: 13px;
+}
+
+.content {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+	overflow: auto;
 }
 
 .state {
 	display: flex;
+	flex: 1;
 	flex-direction: column;
 	align-items: center;
+	justify-content: center;
 	gap: 16px;
-	padding: 80px 0;
-}
-
-.notice {
-	margin-bottom: 16px;
-}
-
-.cards {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-	gap: 12px;
-	margin-bottom: 12px;
-}
-
-.card {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-	gap: 4px;
-	padding: 16px;
-	text-align: left;
-	color: var(--theme--foreground);
-	background: var(--theme--background-subdued);
-	border: var(--theme--border-width) solid var(--theme--border-color-subdued);
-	border-radius: var(--theme--border-radius);
-	cursor: pointer;
-}
-
-.card:hover {
-	border-color: var(--theme--border-color);
-}
-
-.card.active {
-	border-color: var(--theme--primary);
-	box-shadow: inset 0 0 0 1px var(--theme--primary);
-}
-
-.card.focus {
-	border-left: 4px solid var(--theme--primary);
-}
-
-.card-label {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	flex-wrap: wrap;
 	color: var(--theme--foreground-subdued);
-	font-size: 13px;
-}
-
-.card-badge {
-	padding: 0 6px;
-	border-radius: 999px;
-	font-size: 11px;
-	color: var(--theme--primary);
-	background: var(--theme--primary-background, var(--theme--background-normal));
-}
-
-.card-value {
-	font-size: 24px;
-	font-weight: 700;
-}
-
-.card.success .card-value { color: var(--theme--success); }
-.card.warning .card-value { color: var(--theme--warning); }
-.card.danger .card-value { color: var(--theme--danger); }
-
-.meta {
-	margin: 0 0 16px;
-}
-
-.warning-text { color: var(--theme--warning); }
-.danger-text { color: var(--theme--danger); }
-
-.technical {
-	margin: -8px 0 16px;
-}
-
-.technical ul {
-	margin: 8px 0 0;
-	padding-left: 20px;
-}
-
-.panel {
-	background: var(--theme--background-subdued);
-	border: var(--theme--border-width) solid var(--theme--border-color-subdued);
-	border-radius: var(--theme--border-radius);
-	padding: 20px;
-	margin-bottom: 20px;
-}
-
-.type-title {
-	margin-bottom: 4px;
-}
-
-.hint {
-	margin: 0 0 16px;
 }
 
 .toolbar {
@@ -444,7 +542,7 @@ function exportReport(format) {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 12px;
-	padding-bottom: 8px;
+	padding: 10px var(--content-padding);
 	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
 }
 
@@ -452,16 +550,24 @@ function exportReport(format) {
 	margin-left: auto;
 }
 
-.group {
-	margin-bottom: 20px;
-}
-
 .group-title {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: baseline;
 	gap: 8px;
+	margin: 0;
+	padding: 16px var(--content-padding) 4px;
 	font-weight: 600;
+}
+
+.section-title {
+	margin: 0;
+	padding: 20px var(--content-padding) 4px;
+	color: var(--theme--foreground-subdued);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
 }
 
 .rows {
@@ -475,12 +581,8 @@ function exportReport(format) {
 	grid-template-columns: 24px minmax(0, 1fr) auto;
 	align-items: center;
 	gap: 12px;
-	padding: 8px 0;
+	padding: 10px var(--content-padding);
 	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
-}
-
-.row:last-child {
-	border-bottom: none;
 }
 
 .name {
@@ -493,19 +595,13 @@ function exportReport(format) {
 	color: var(--theme--primary);
 }
 
-.empty {
-	padding: 24px 0;
-	text-align: center;
-	color: var(--theme--foreground-subdued);
-}
-
 .more {
-	margin-top: 12px;
+	padding: 12px var(--content-padding);
 }
 
 .bars {
-	margin: 12px 0 0;
-	padding: 0;
+	margin: 0;
+	padding: 12px var(--content-padding) 0;
 	list-style: none;
 }
 
@@ -531,7 +627,75 @@ function exportReport(format) {
 	background: var(--theme--primary);
 }
 
-.muted { color: var(--theme--foreground-subdued); }
-.small { font-size: 13px; }
-.header-icon { margin-right: 8px; }
+.warning-text {
+	color: var(--theme--warning);
+}
+
+.danger-text {
+	color: var(--theme--danger);
+}
+
+.muted {
+	color: var(--theme--foreground-subdued);
+}
+
+.small {
+	font-size: 13px;
+}
+
+.cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 16px;
+	padding: var(--content-padding);
+}
+
+.card {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+	padding: 20px;
+	text-align: left;
+	color: var(--theme--foreground);
+	background: var(--theme--background-subdued);
+	border: var(--theme--border-width) solid var(--theme--border-color-subdued);
+	border-radius: var(--theme--border-radius);
+	cursor: pointer;
+}
+
+.card:hover {
+	border-color: var(--theme--primary);
+}
+
+.card.focus {
+	border-left: 4px solid var(--theme--primary);
+}
+
+.card-label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	color: var(--theme--foreground-subdued);
+	font-size: 13px;
+}
+
+.card-value {
+	font-size: 28px;
+	font-weight: 700;
+	line-height: 1.2;
+}
+
+.card.success .card-value {
+	color: var(--theme--success);
+}
+
+.card.warning .card-value {
+	color: var(--theme--warning);
+}
+
+.card.danger .card-value {
+	color: var(--theme--danger);
+}
 </style>

@@ -83,16 +83,16 @@ function fullDate(value) {
 	grid-template-columns: 40px minmax(0, 1fr) auto 110px auto;
 	align-items: center;
 	gap: 12px;
-	padding: 8px 0;
+	padding: 8px var(--content-padding);
 	border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
+}
+
+.file-row:hover {
+	background: var(--theme--background-subdued);
 }
 
 .file-row.selectable {
 	grid-template-columns: 24px 40px minmax(0, 1fr) auto 110px auto;
-}
-
-.file-row:last-child {
-	border-bottom: none;
 }
 
 .thumb {

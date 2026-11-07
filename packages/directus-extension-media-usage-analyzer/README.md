@@ -4,23 +4,22 @@ Find unused and duplicate files, broken file links and large images in your Dire
 
 ## Features
 
-- **Storage used**: total size, file count and your largest files
+- **Storage**: total size, file count, storage by type and your largest files
 - **Unused files**: files that no field points to, with safe batch delete
 - **Duplicates**: groups of likely duplicate uploads and the space they waste
 - **Broken links**: fields that point to files that no longer exist
 - **Large images**: images over 4000 px on a side or over 10 MB
-- **Storage by type**: images, video, documents and other
 - **Export**: the full report as CSV or JSON
 
 ## Usage
 
 Once installed, enable the module in your Project Settings and open **Media Usage Analyzer** from the module bar.
 
-1. A scan starts right away and shows a card for each report. The card most worth acting on is marked **Start here**.
-2. Click a card to see its files, each with a thumbnail and an **Open** link.
-3. To clean up, select unused files and click **Delete selected**, then confirm.
+1. A scan starts right away and opens the **Overview**: one card each for Storage, Unused files, Duplicates, Broken links and Large images, with **Start here** on the one most worth acting on.
+2. Click a card (or pick it in the sidebar) to see its files, each with a thumbnail and an **Open** link. Choose **Overview** in the sidebar to go back.
+3. To clean up, open **Unused files**, select files and click **Delete selected**, then confirm.
 
-To also find files linked inside text and JSON fields (e.g. `/assets/<id>` in a WYSIWYG field), tick **Also check links inside text fields (slower)** and click **Scan again**.
+To also find files linked inside text and JSON fields (e.g. `/assets/<id>` in a WYSIWYG field), tick **Also check links inside text fields** in the sidebar and click **Scan again** in the header.
 
 ## Requirements
 
